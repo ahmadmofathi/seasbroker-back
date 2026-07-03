@@ -1,0 +1,11 @@
+/node_modules/
+/.vscode/
+.DS_Store
+
+# exclude local env files
+.env.local
+.env.*.local
+
+# exclude build files
+dist
+

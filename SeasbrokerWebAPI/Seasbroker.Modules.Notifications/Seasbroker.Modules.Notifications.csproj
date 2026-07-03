@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Seasbroker.Modules.Notifications</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Seasbroker.Infrastructure.Persistence\Seasbroker.Infrastructure.Persistence.csproj" />
+    <ProjectReference Include="..\Seasbroker.Modules.Matching\Seasbroker.Modules.Matching.csproj" />
+    <ProjectReference Include="..\Seasbroker.Modules.Approval\Seasbroker.Modules.Approval.csproj" />
+    <ProjectReference Include="..\Seasbroker.Modules.Chat\Seasbroker.Modules.Chat.csproj" />
+    <ProjectReference Include="..\Seasbroker.Modules.Identity\Seasbroker.Modules.Identity.csproj" />
+  </ItemGroup>
+
+</Project>

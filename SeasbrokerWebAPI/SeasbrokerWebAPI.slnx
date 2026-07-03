@@ -1,0 +1,20 @@
+<Solution>
+  <Project Path="Seasbroker.Infrastructure.Persistence/Seasbroker.Infrastructure.Persistence.csproj" />
+  <Project Path="Seasbroker.Modules.Chat/Seasbroker.Modules.Chat.csproj" />
+  <Project Path="Seasbroker.Modules.Identity/Seasbroker.Modules.Identity.csproj" />
+  <Project Path="Seasbroker.Modules.Quote/Seasbroker.Modules.Quote.csproj" />
+  <Project Path="Seasbroker.Modules.Vessel/Seasbroker.Modules.Vessel.csproj" />
+  <Project Path="Seasbroker.Modules.Cargo/Seasbroker.Modules.Cargo.csproj" />
+  <Project Path="Seasbroker.Modules.Matching/Seasbroker.Modules.Matching.csproj" />
+  <Project Path="Seasbroker.Modules.Approval/Seasbroker.Modules.Approval.csproj" />
+  <Project Path="Seasbroker.Modules.Notifications/Seasbroker.Modules.Notifications.csproj" />
+  <Project Path="Seasbroker.Modules.Vessel.Tests/Seasbroker.Modules.Vessel.Tests.csproj" />
+  <Project Path="Seasbroker.Modules.Cargo.Tests/Seasbroker.Modules.Cargo.Tests.csproj" />
+  <Project Path="Seasbroker.Modules.Matching.Tests/Seasbroker.Modules.Matching.Tests.csproj" />
+  <Project Path="Seasbroker.Modules.Approval.Tests/Seasbroker.Modules.Approval.Tests.csproj" />
+  <Project Path="Seasbroker.Modules.Notifications.Tests/Seasbroker.Modules.Notifications.Tests.csproj" />
+  <Project Path="Seasbroker.Modules.Identity.Tests/Seasbroker.Modules.Identity.Tests.csproj" />
+  <Project Path="Seasbroker.Modules.Chat.Tests/Seasbroker.Modules.Chat.Tests.csproj" />
+  <Project Path="SeasbrokerWebAPI.IntegrationTests/SeasbrokerWebAPI.IntegrationTests.csproj" />
+  <Project Path="SeasbrokerWebAPI/SeasbrokerWebAPI.csproj" />
+</Solution>

@@ -1,0 +1,35 @@
+# Build output
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets and environment-specific config
+**/appsettings.Development.json
+**/appsettings.Production.json
+*.publishSettings
+**/Properties/PublishProfiles/*.pubxml
+
+# PocketBase local data (legacy ui folder)
+pb_data/
+pb_migrations/
+pb_public*/
+pocketbase
+pocketbase.exe
+
+# Test / coverage
+TestResults/
+coverage/
+*.coverage
