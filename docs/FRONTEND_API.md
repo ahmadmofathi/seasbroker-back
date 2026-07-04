@@ -254,9 +254,22 @@ Content-Type: application/json
 
 ```json
 {
-  "message": "Quote request created successfully!"
+  "message": "Quote request created successfully!",
+  "id": "uuid",
+  "requestedQuoteId": "uuid"
 }
 ```
+
+---
+
+### List quote requests (admin)
+
+```http
+GET /api/collections/requestedQuotes/records?page=1&perPage=50
+Authorization: Bearer <superuser-token>
+```
+
+Returns paginated public form submissions (quote, ship route, clearance, contact) with contact fields (`fname`, `lname`, `email`, `phoneNumber`).
 
 ---
 
@@ -793,6 +806,8 @@ These are **not** exposed on the production host.
 | Superuser | GET | `/api/collections/chats/records` |
 | Superuser | GET | `/api/collections/chats/records/{id}` |
 | Superuser | GET/POST | `/api/collections/messages/records` |
+| Superuser | GET | `/api/collections/requestedQuotes/records` |
+| Superuser | GET | `/api/collections/requestedQuotes/records/{id}` |
 | Superuser | GET/POST/PATCH | `/api/collections/cargoListings/records` |
 | Superuser | GET | `/api/collections/cargoListings/records/{id}` |
 | Superuser | POST | `/api/cargo/promote-from-quote` |

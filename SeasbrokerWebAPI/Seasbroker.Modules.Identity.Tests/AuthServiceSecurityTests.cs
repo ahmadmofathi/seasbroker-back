@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -229,8 +230,10 @@ public class AuthServiceSecurityTests
 
         services.AddLogging();
         services.AddHttpContextAccessor();
+        services.AddDataProtection();
         services.AddDbContext<SeasbrokerDbContext>(options => options.UseInMemoryDatabase(dbName));
-        services.AddIdentity<User, Role>(options =>
+        services
+            .AddIdentityCore<User>(options =>
             {
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequireDigit = false;
@@ -242,6 +245,7 @@ public class AuthServiceSecurityTests
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
                 options.Lockout.MaxFailedAccessAttempts = 5;
             })
+            .AddRoles<Role>()
             .AddEntityFrameworkStores<SeasbrokerDbContext>()
             .AddDefaultTokenProviders();
 

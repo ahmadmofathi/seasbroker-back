@@ -132,6 +132,8 @@ app.UseApprovalModule();
 
 app.UseNotificationsModule();
 
+// JWT Bearer is the only authentication scheme (configured in Identity module).
+// Must run before UseAuthorization so [Authorize] policies see the principal.
 app.UseIdentityModule();
 
 app.UseAuthorization();

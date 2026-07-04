@@ -47,8 +47,10 @@ public sealed class QuoteIntegrationTests
         var body = await response.Content.ReadFromJsonAsync<CreateQuoteResponse>(IntegrationJson.Options);
         Assert.NotNull(body);
         Assert.Contains("success", body.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.False(string.IsNullOrWhiteSpace(body.Id));
+        Assert.Equal(body.Id, body.RequestedQuoteId);
 
-        var quoteId = await TestDataQueries.GetLatestQuoteIdForEmailAsync(_fixture.Factory.Services, email);
+        var quoteId = Guid.Parse(body.Id);
 
         await using var scope = _fixture.Factory.Services.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<SeasbrokerDbContext>();

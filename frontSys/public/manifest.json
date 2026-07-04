@@ -1,0 +1,15 @@
+{
+  "short_name": "SeasBroker",
+  "name": "Seas Broker - Sea Transportation & Logistics",
+  "icons": [
+    {
+      "src": "Logo_trans.ico",
+      "sizes": "256x256",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}

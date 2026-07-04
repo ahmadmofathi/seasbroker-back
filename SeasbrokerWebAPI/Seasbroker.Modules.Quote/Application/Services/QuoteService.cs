@@ -79,18 +79,58 @@ public class QuoteService : IQuoteService
             throw new QuoteException("Failed to save quote", StatusCodes.Status500InternalServerError, ex.Message);
         }
 
-        return new CreateQuoteResponse();
+        return new CreateQuoteResponse
+        {
+            Id = quote.Id.ToString(),
+            RequestedQuoteId = quote.Id.ToString(),
+        };
     }
 
-    public async Task<IReadOnlyList<RequestedQuoteRecordDto>> GetAllAsync(
+    public async Task<PocketBaseListResponse<RequestedQuoteRecordDto>> GetAllAsync(
         GetRequestedQuotesQuery query,
         CancellationToken cancellationToken = default)
     {
+        var page = query.Page < 1 ? 1 : query.Page;
+        var perPage = query.PerPage < 1 ? 50 : Math.Min(query.PerPage, 200);
+
+        var totalItems = await _dbContext.RequestedQuotes
+            .AsNoTracking()
+            .CountAsync(cancellationToken);
+
         var quotes = await _dbContext.RequestedQuotes
             .AsNoTracking()
+            .Include(q => q.Customer)
             .OrderByDescending(q => q.Created)
+            .Skip((page - 1) * perPage)
+            .Take(perPage)
             .ToListAsync(cancellationToken);
 
-        return quotes.Select(QuoteMapper.ToRecordDto).ToList();
+        var totalPages = totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)perPage);
+
+        return new PocketBaseListResponse<RequestedQuoteRecordDto>
+        {
+            Page = page,
+            PerPage = perPage,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
+            Items = quotes.Select(QuoteMapper.ToRecordDto).ToList(),
+        };
+    }
+
+    public async Task<RequestedQuoteRecordDto?> GetByIdAsync(
+        string id,
+        CancellationToken cancellationToken = default)
+    {
+        if (!Guid.TryParse(id, out var quoteId))
+        {
+            return null;
+        }
+
+        var quote = await _dbContext.RequestedQuotes
+            .AsNoTracking()
+            .Include(q => q.Customer)
+            .FirstOrDefaultAsync(q => q.Id == quoteId, cancellationToken);
+
+        return quote is null ? null : QuoteMapper.ToRecordDto(quote);
     }
 }

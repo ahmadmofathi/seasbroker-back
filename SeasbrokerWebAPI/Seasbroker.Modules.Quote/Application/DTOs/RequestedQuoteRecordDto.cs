@@ -22,6 +22,18 @@ public class RequestedQuoteRecordDto
     [JsonPropertyName("customer")]
     public string Customer { get; set; } = string.Empty;
 
+    [JsonPropertyName("fname")]
+    public string Fname { get; set; } = string.Empty;
+
+    [JsonPropertyName("lname")]
+    public string Lname { get; set; } = string.Empty;
+
+    [JsonPropertyName("email")]
+    public string Email { get; set; } = string.Empty;
+
+    [JsonPropertyName("phoneNumber")]
+    public string PhoneNumber { get; set; } = string.Empty;
+
     [JsonPropertyName("cargoType")]
     public string CargoType { get; set; } = string.Empty;
 

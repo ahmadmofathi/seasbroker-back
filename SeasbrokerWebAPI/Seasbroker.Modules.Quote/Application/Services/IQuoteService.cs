@@ -10,7 +10,11 @@ public interface IQuoteService
         CreateQuoteCommand command,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<RequestedQuoteRecordDto>> GetAllAsync(
+    Task<PocketBaseListResponse<RequestedQuoteRecordDto>> GetAllAsync(
         GetRequestedQuotesQuery query,
+        CancellationToken cancellationToken = default);
+
+    Task<RequestedQuoteRecordDto?> GetByIdAsync(
+        string id,
         CancellationToken cancellationToken = default);
 }
