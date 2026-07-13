@@ -5,10 +5,11 @@ import { useLocation } from 'react-router';
 import SectionHeading from '../component/Common/SectionHeading';
 import pb from '../utils/pocketbase';
 import type { Shipment } from '../types/shipment';
+import { useAlert } from '../context/AlertContext';
 
 const TrackShipmentView: React.FC = () => {
-  const [shipment, setShipment] = useState<Shipment | null>(null); // Set initial state to null
-  const [error, setError] = useState<string | null>(null); // Optional: to handle errors
+  const [shipment, setShipment] = useState<Shipment | null>(null);
+  const { error: showError } = useAlert();
 
   // Function to parse query parameters
   const useQuery = () => {
@@ -28,9 +29,9 @@ const TrackShipmentView: React.FC = () => {
           `tracking_id='${id}' && email='${email}'`
         );
         setShipment(shipmentData.expand as Shipment); // Set the shipment data
-      } catch (error) {
-        console.error("Error fetching shipment data:", error);
-        setError("Failed to fetch shipment data");
+      } catch (err) {
+        console.error("Error fetching shipment data:", err);
+        showError("Failed to fetch shipment data");
       }
     }
 
@@ -59,7 +60,7 @@ const TrackShipmentView: React.FC = () => {
                     <p><strong>Departure City:</strong> {shipment.departure_city}</p>
                   </div>
                 ) : (
-                  <p style={{ color: 'red' }}>{error}</p>
+                  <p>Loading shipment details…</p>
                 )}
               </div>
             </div>

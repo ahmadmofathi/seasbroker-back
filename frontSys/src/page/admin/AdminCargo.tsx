@@ -2,7 +2,16 @@ import { useEffect, useState } from 'react';
 import { cargoApi } from '../../api';
 import AdminModal from '../../component/admin/AdminModal';
 import { formatApiError } from '../../utils/formatApiError';
+import { useAlert } from '../../context/AlertContext';
 import type { CargoListingRecord, CargoStatus } from '../../api/types';
+import {
+  CARGO_PRIORITIES,
+  CARGO_STATUSES,
+  CARGO_STATUSES_ON_CREATE,
+  DEFAULT_CARGO_PRIORITY,
+} from '../../constants/domainEnums';
+import { DEFAULT_CARGO_TYPE, cargoTypeSelectOptions } from '../../constants/cargoTypes';
+import { portSelectOptions } from '../../utils/portOptions';
 
 type CargoForm = {
   customer: string;
@@ -21,7 +30,7 @@ type CargoForm = {
 
 const emptyForm = (): CargoForm => ({
   customer: '',
-  cargoType: '',
+  cargoType: DEFAULT_CARGO_TYPE,
   weight: '',
   dimensions: '',
   departurePort: '',
@@ -30,7 +39,7 @@ const emptyForm = (): CargoForm => ({
   arrivalTime: '',
   referenceNumber: '',
   status: 'Open',
-  priority: '0',
+  priority: String(DEFAULT_CARGO_PRIORITY),
   additionalInfo: '',
 });
 
@@ -45,7 +54,7 @@ function toLocalInput(value?: string): string {
 function fromCargo(c: CargoListingRecord): CargoForm {
   return {
     customer: c.customer ?? '',
-    cargoType: c.cargoType ?? '',
+    cargoType: c.cargoType?.trim() || DEFAULT_CARGO_TYPE,
     weight: String(c.weight ?? ''),
     dimensions: c.dimensions ?? '',
     departurePort: c.departurePort ?? '',
@@ -78,20 +87,19 @@ function toPayload(form: CargoForm): Partial<CargoListingRecord> {
 
 const AdminCargo: React.FC = () => {
   const [listings, setListings] = useState<CargoListingRecord[]>([]);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<CargoForm>(emptyForm);
   const [editing, setEditing] = useState<CargoListingRecord | null>(null);
   const [open, setOpen] = useState(false);
+  const { error: showError } = useAlert();
 
   const load = () => {
     setLoading(true);
-    setError('');
     cargoApi
       .listCargoListings()
       .then(setListings)
-      .catch((e: unknown) => setError(formatApiError(e)))
+      .catch((e: unknown) => showError(formatApiError(e)))
       .finally(() => setLoading(false));
   };
 
@@ -124,7 +132,6 @@ const AdminCargo: React.FC = () => {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
     try {
       const body = toPayload(form);
       if (editing) {
@@ -136,7 +143,7 @@ const AdminCargo: React.FC = () => {
       setEditing(null);
       load();
     } catch (err) {
-      setError(formatApiError(err));
+      showError(formatApiError(err));
     } finally {
       setSaving(false);
     }
@@ -147,7 +154,7 @@ const AdminCargo: React.FC = () => {
       await cargoApi.closeCargo(id);
       load();
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     }
   };
 
@@ -156,18 +163,12 @@ const AdminCargo: React.FC = () => {
       await cargoApi.cancelCargo(id);
       load();
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     }
   };
 
   return (
     <>
-      {error && (
-        <div className="admin-alert-error">
-          <i className="ri-error-warning-line" /> {error}
-        </div>
-      )}
-
       <div className="admin-action-bar">
         <button type="button" className="admin-btn-sm primary" onClick={openCreate}>
           <i className="ri-add-line" /> Add Cargo Listing
@@ -275,7 +276,19 @@ const AdminCargo: React.FC = () => {
             </div>
             <div className="admin-field">
               <label htmlFor="c-type">Cargo Type</label>
-              <input id="c-type" className="admin-input" required value={form.cargoType} onChange={(e) => setField('cargoType', e.target.value)} />
+              <select
+                id="c-type"
+                className="admin-input"
+                required
+                value={form.cargoType}
+                onChange={(e) => setField('cargoType', e.target.value)}
+              >
+                {cargoTypeSelectOptions(form.cargoType).map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="admin-field">
               <label htmlFor="c-weight">Weight (kg)</label>
@@ -287,11 +300,37 @@ const AdminCargo: React.FC = () => {
             </div>
             <div className="admin-field">
               <label htmlFor="c-dep">Departure Port</label>
-              <input id="c-dep" className="admin-input" required value={form.departurePort} onChange={(e) => setField('departurePort', e.target.value)} />
+              <select
+                id="c-dep"
+                className="admin-input"
+                required
+                value={form.departurePort}
+                onChange={(e) => setField('departurePort', e.target.value)}
+              >
+                <option value="">Select port…</option>
+                {portSelectOptions(form.departurePort).map((p) => (
+                  <option key={`dep-${p.value}`} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="admin-field">
               <label htmlFor="c-arr">Arrival Port</label>
-              <input id="c-arr" className="admin-input" required value={form.arrivalPort} onChange={(e) => setField('arrivalPort', e.target.value)} />
+              <select
+                id="c-arr"
+                className="admin-input"
+                required
+                value={form.arrivalPort}
+                onChange={(e) => setField('arrivalPort', e.target.value)}
+              >
+                <option value="">Select port…</option>
+                {portSelectOptions(form.arrivalPort).map((p) => (
+                  <option key={`arr-${p.value}`} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="admin-field">
               <label htmlFor="c-dep-time">Departure Time</label>
@@ -306,17 +345,28 @@ const AdminCargo: React.FC = () => {
               <input id="c-ref" className="admin-input" value={form.referenceNumber} onChange={(e) => setField('referenceNumber', e.target.value)} />
             </div>
             <div className="admin-field">
-              <label htmlFor="c-priority">Priority</label>
-              <input id="c-priority" className="admin-input" type="number" value={form.priority} onChange={(e) => setField('priority', e.target.value)} />
+              <label htmlFor="c-priority">Priority (1–5)</label>
+              <select
+                id="c-priority"
+                className="admin-input"
+                value={form.priority}
+                onChange={(e) => setField('priority', e.target.value)}
+              >
+                {CARGO_PRIORITIES.map((p) => (
+                  <option key={p} value={String(p)}>
+                    {p}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="admin-field">
               <label htmlFor="c-status">Status</label>
               <select id="c-status" className="admin-input" value={form.status} onChange={(e) => setField('status', e.target.value as CargoStatus)}>
-                <option value="Draft">Draft</option>
-                <option value="Open">Open</option>
-                <option value="Matched">Matched</option>
-                <option value="Closed">Closed</option>
-                <option value="Cancelled">Cancelled</option>
+                {(editing ? CARGO_STATUSES : CARGO_STATUSES_ON_CREATE).map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="admin-field full">

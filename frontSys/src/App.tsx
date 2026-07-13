@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
 import ScrollToTop from './component/Home/ScrollToTop';
 import { AdminAuthProvider } from './context/AdminAuthContext';
+import { AlertProvider } from './context/AlertContext';
 
 import Navbar from './component/Common/Navbar/Navbar';
 import Footer from './component/Common/Footer';
@@ -89,12 +90,14 @@ const AdminRoutes: React.FC = () => (
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/admin/*" element={<AdminRoutes />} />
-        <Route path="/*" element={<PublicLayout />} />
-      </Routes>
-    </BrowserRouter>
+    <AlertProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/admin/*" element={<AdminRoutes />} />
+          <Route path="/*" element={<PublicLayout />} />
+        </Routes>
+      </BrowserRouter>
+    </AlertProvider>
   );
 };
 

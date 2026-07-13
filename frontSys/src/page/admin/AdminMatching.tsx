@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { cargoApi, matchingApi, vesselsApi } from '../../api';
 import AdminModal from '../../component/admin/AdminModal';
 import { formatApiError } from '../../utils/formatApiError';
+import { useAlert } from '../../context/AlertContext';
 import type { CargoListingRecord, MatchRecord, VesselRecord } from '../../api/types';
 
 function toMatchList(value: unknown): MatchRecord[] {
@@ -95,10 +96,10 @@ const AdminMatching: React.FC = () => {
   const [cargoOptions, setCargoOptions] = useState<CargoListingRecord[]>([]);
   const [vesselOptions, setVesselOptions] = useState<VesselRecord[]>([]);
   const [runResult, setRunResult] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [openManual, setOpenManual] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { error: showError } = useAlert();
   const [manualForm, setManualForm] = useState({
     cargoListingId: '',
     vesselId: '',
@@ -108,7 +109,6 @@ const AdminMatching: React.FC = () => {
 
   const load = () => {
     setLoading(true);
-    setError('');
 
     Promise.allSettled([
       matchingApi.listPendingApproval(),
@@ -130,7 +130,7 @@ const AdminMatching: React.FC = () => {
           | PromiseRejectedResult
           | undefined;
         if (firstError) {
-          setError(formatApiError(firstError.reason));
+          showError(formatApiError(firstError.reason));
         }
       })
       .finally(() => setLoading(false));
@@ -146,7 +146,7 @@ const AdminMatching: React.FC = () => {
       setRunResult(`Created: ${r.matchesCreated} · Skipped: ${r.matchesSkipped}`);
       load();
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     }
   };
 
@@ -155,7 +155,7 @@ const AdminMatching: React.FC = () => {
       await matchingApi.approveMatch(id, { reason: 'Approved via admin dashboard' });
       load();
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     }
   };
 
@@ -164,14 +164,13 @@ const AdminMatching: React.FC = () => {
       await matchingApi.rejectMatch(id, { reason: 'Rejected via admin dashboard' });
       load();
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     }
   };
 
   const createManual = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
     try {
       await matchingApi.createManualMatch({
         cargoListingId: manualForm.cargoListingId,
@@ -183,7 +182,7 @@ const AdminMatching: React.FC = () => {
       setManualForm({ cargoListingId: '', vesselId: '', score: '80', matchReason: '' });
       load();
     } catch (err) {
-      setError(formatApiError(err));
+      showError(formatApiError(err));
     } finally {
       setSaving(false);
     }
@@ -191,12 +190,6 @@ const AdminMatching: React.FC = () => {
 
   return (
     <>
-      {error && (
-        <div className="admin-alert-error">
-          <i className="ri-error-warning-line" /> {error}
-        </div>
-      )}
-
       <div className="admin-action-bar">
         <button type="button" className="admin-btn-sm primary" onClick={() => void runMatching()}>
           <i className="ri-play-circle-line" /> Run Matching Engine

@@ -1,16 +1,13 @@
 import { useState } from "react";
 import FormSelect from "../Common/FormSelect";
 import ports from "../../utils/ports.json";
+import { toCargoTypeOptions, DEFAULT_CARGO_TYPE } from "../../constants/cargoTypes";
 import { quoteApi } from "../../api";
 import { withServiceTag } from "../../api/types";
 import { formatApiError } from "../../utils/formatApiError";
+import { useAlert } from "../../context/AlertContext";
 import { useNavigate } from "react-router";
 import * as z from "zod";
-
-interface CargoType {
-  value: string;
-  text: string;
-}
 
 const QuoteFormSchema = z.object({
   cargoType: z.string().trim().min(1, "Cargo type is required."),
@@ -35,7 +32,7 @@ const offsetInHours = Math.round((-new Date().getTimezoneOffset()) / 60);
 const RequestQuoteForm: React.FC = () => {
   // Some of the options poperties are hardcoded according to the formfield property in FormSelect
   const [formData, setFormData] = useState<RequestQuoteFormData>({
-    cargoType: '',
+    cargoType: DEFAULT_CARGO_TYPE,
     weight: 0,
     departurePort: '',
     departureTime: '',
@@ -50,22 +47,11 @@ const RequestQuoteForm: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<z.core.$ZodFlattenedError<RequestQuoteFormData>>();
-  const [submitError, setSubmitError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { success, error: showError, warning } = useAlert();
 
-  const cargo_types: CargoType[] = [
-    { value: "General Cargo", text: "General Cargo" },
-    { value: "Gas", text: "Gas" },
-    { value: "Liquid", text: "Liquid" },
-    { value: "Heavy", text: "Heavy" },
-    { value: "Fragile", text: "Fragile" },
-    { value: "Perishable", text: "Perishable" },
-    { value: "Bulk", text: "Bulk" },
-    { value: "Dry", text: "Dry" },
-    { value: "Refrigerated", text: "Refrigerated" },
-    { value: "Other", text: "Other" },
-  ];
+  const cargo_types = toCargoTypeOptions();
 
   // Create a cities array using port data
   const cities = [
@@ -94,12 +80,11 @@ const RequestQuoteForm: React.FC = () => {
     const result = QuoteFormSchema.safeParse(data);
 
     if (!result.success) {
-      // setErrors(z.flattenError(result.error));
       setErrors(z.flattenError(result.error));
+      warning('Please fix the errors above before submitting.');
       return;
     }
     setErrors(undefined);
-    setSubmitError('');
     setSubmitting(true);
 
     quoteApi
@@ -109,15 +94,14 @@ const RequestQuoteForm: React.FC = () => {
       })
       .then((response) => {
         setSubmitting(false);
-        alert(
-          (response.message || 'Quote request submitted successfully') +
-            '\n\nIt is now available in Admin → Public Requests.',
+        success(
+          `${response.message || 'Quote request submitted successfully.'}\n\nIt is now available in Admin → Public Requests.`,
         );
         void navigate('/');
       })
-      .catch((error: unknown) => {
+      .catch((err: unknown) => {
         setSubmitting(false);
-        setSubmitError(formatApiError(error));
+        showError(formatApiError(err));
       });
   };
 
@@ -316,14 +300,6 @@ const RequestQuoteForm: React.FC = () => {
             <button type="submit" className="btn btn-theme" disabled={submitting}>
               {submitting ? 'Submitting…' : 'Request Quote'}
             </button>
-            {errors !== undefined && (
-              <div className="alert alert-danger mt-3">
-                Please fix the errors above before submitting.
-              </div>
-            )}
-            {submitError && (
-              <div className="alert alert-danger mt-3">{submitError}</div>
-            )}
           </div>
         </div>
       </div>

@@ -5,8 +5,8 @@ const REMOTE_API =
   (import.meta.env.VITE_API_URL as string | undefined) ??
   'http://seasbreaker.runasp.net';
 
-/** In dev, use Vite proxy (same-origin) to avoid ASP.NET cookie/auth issues */
-export const API_BASE = import.meta.env.DEV ? '' : REMOTE_API;
+/** Always hit the configured API host (production by default), including local dev */
+export const API_BASE = REMOTE_API;
 
 export function resolveApiOrigin(): string {
   if (API_BASE) return API_BASE;

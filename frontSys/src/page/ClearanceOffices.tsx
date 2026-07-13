@@ -5,11 +5,12 @@ import { useLocation } from 'react-router';
 import SectionHeading from '../component/Common/SectionHeading';
 import pb from '../utils/pocketbase';
 import type { Office } from '../types/office';
+import { useAlert } from '../context/AlertContext';
 
 const TrackYourShip: React.FC = () => {
-  const [offices, setOffices] = useState<Office[]>([]); // Set initial state to null
-  const [error, setError] = useState<string | null>(null); // Optional: to handle errors
-  const [filteredOffices, setFilteredOffices] = useState<Office[]>([]); // State for filtered offices
+  const [offices, setOffices] = useState<Office[]>([]);
+  const [filteredOffices, setFilteredOffices] = useState<Office[]>([]);
+  const { error: showError, warning } = useAlert();
   console.log(offices);
 
   // Function to parse query parameters
@@ -31,12 +32,12 @@ const TrackYourShip: React.FC = () => {
           setOffices(officesData); // Set offices data
           setFilteredOffices(officesData); // Initially, show all offices
         } else {
-          setError("No offices found in this region.");
+          warning("No offices found in this region.");
         } 
       }
-      catch (error) {
-        setError("Failed to fetch offices details");
-        console.error(error); // Log error for debugging
+      catch (err) {
+        showError("Failed to fetch offices details");
+        console.error(err);
       }
     };
 
@@ -74,7 +75,6 @@ const TrackYourShip: React.FC = () => {
           <div className="row">
             <div className="col-12 col-md-12 col-sm-12">
               <div className="track_area_form">
-                {error && <p style={{ color: 'red' }}>{error}</p>}
                 {/* Display table of offices if data is available */}
                 {filteredOffices.length > 0 ? (
                   <table className="table">

@@ -2,12 +2,12 @@ import { useState } from 'react';
 import FormInput from '../Common/FormInput';
 import { quoteApi } from '../../api';
 import { formatApiError } from '../../utils/formatApiError';
+import { useAlert } from '../../context/AlertContext';
 import { withServiceTag } from '../../api/types';
 
 const ContactForm: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const { success, error: showError } = useAlert();
 
   const handleSubmit: React.FormEventHandler = (e) => {
     e.preventDefault();
@@ -16,8 +16,6 @@ const ContactForm: React.FC = () => {
 
   const submitContact = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
     setSubmitting(true);
 
     const form = e.currentTarget as HTMLFormElement;
@@ -49,10 +47,10 @@ const ContactForm: React.FC = () => {
         phoneNumber: 'N/A',
       });
 
-      setSuccess(response.message || 'Message sent successfully.');
+      success(response.message || 'Message sent successfully.');
       form.reset();
     } catch (err) {
-      setError(formatApiError(err));
+      showError(formatApiError(err));
     } finally {
       setSubmitting(false);
     }
@@ -61,16 +59,6 @@ const ContactForm: React.FC = () => {
   return (
     <form onSubmit={handleSubmit}>
       <div className="row">
-        {error && (
-          <div className="col-lg-12">
-            <div className="alert alert-danger">{error}</div>
-          </div>
-        )}
-        {success && (
-          <div className="col-lg-12">
-            <div className="alert alert-success">{success}</div>
-          </div>
-        )}
         <div className="col-lg-12">
           <FormInput tag="input" type="text" name="name" classes="form-control" placeholder="Name" />
         </div>

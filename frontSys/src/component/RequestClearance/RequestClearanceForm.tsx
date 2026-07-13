@@ -1,33 +1,20 @@
 import { useState } from 'react';
 import FormInput from '../Common/FormInput';
-import ports from '../../utils/ports.json';
 import { useNavigate } from 'react-router';
 import { quoteApi } from '../../api';
 import { formatApiError } from '../../utils/formatApiError';
+import { useAlert } from '../../context/AlertContext';
 import { withServiceTag } from '../../api/types';
+import { toCargoTypeOptions } from '../../constants/cargoTypes';
+import { getPortOptions } from '../../utils/portOptions';
 
 const RequestClearance: React.FC = () => {
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const { success, error: showError } = useAlert();
 
-  const cargo_types = [
-    { value: 'General Cargo', text: 'General Cargo' },
-    { value: 'Gas', text: 'Gas' },
-    { value: 'Liquid', text: 'Liquid' },
-    { value: 'Heavy', text: 'Heavy' },
-    { value: 'Fragile', text: 'Fragile' },
-    { value: 'Perishable', text: 'Perishable' },
-    { value: 'Bulk', text: 'Bulk' },
-    { value: 'Dry', text: 'Dry' },
-    { value: 'Refrigerated', text: 'Refrigerated' },
-    { value: 'Other', text: 'Other' },
-  ];
-
-  const cities = Object.values(ports).map((port) => ({
-    text: `${port.name} - ${port.country}`,
-    value: `${port.name} - ${port.country}`,
-  }));
+  const cargo_types = toCargoTypeOptions();
+  const cities = getPortOptions().map((p) => ({ text: p.label, value: p.value }));
 
   const handleSubmit: React.FormEventHandler = (e) => {
     e.preventDefault();
@@ -36,7 +23,6 @@ const RequestClearance: React.FC = () => {
 
   const submitClearance = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setSubmitting(true);
 
     const formData = new FormData(e.currentTarget as HTMLFormElement);
@@ -73,10 +59,10 @@ const RequestClearance: React.FC = () => {
         phoneNumber,
       });
 
-      alert(response.message || 'Clearance request submitted successfully.');
+      success(response.message || 'Clearance request submitted successfully.');
       void navigate(`/clearance_offices?delivery-port=${encodeURIComponent(deliveryPort)}`);
     } catch (err) {
-      setError(formatApiError(err));
+      showError(formatApiError(err));
     } finally {
       setSubmitting(false);
     }
@@ -94,12 +80,6 @@ const RequestClearance: React.FC = () => {
                     <h3>Request Customs Clearance Quote</h3>
                   </div>
                 </div>
-
-                {error && (
-                  <div className="col-lg-12">
-                    <div className="alert alert-danger">{error}</div>
-                  </div>
-                )}
 
                 <div className="col-lg-6">
                   <FormInput name="cargo_type" tag="select" classes="form-control" options={cargo_types} label="Cargo Type" />

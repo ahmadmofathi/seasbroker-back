@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { notificationsApi } from '../../api';
 import { formatApiError } from '../../utils/formatApiError';
+import { useAlert } from '../../context/AlertContext';
 import type { NotificationRecord } from '../../api/types';
 
 const AdminNotifications: React.FC = () => {
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [unread, setUnread] = useState<NotificationRecord[]>([]);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const { success, error: showError, confirm } = useAlert();
 
   const load = () => {
     setLoading(true);
@@ -19,7 +20,7 @@ const AdminNotifications: React.FC = () => {
         setNotifications(Array.isArray(all?.items) ? all.items : Array.isArray(all) ? all : []);
         setUnread(Array.isArray(u) ? u : []);
       })
-      .catch((e: unknown) => setError(formatApiError(e)))
+      .catch((e: unknown) => showError(formatApiError(e)))
       .finally(() => setLoading(false));
   };
 
@@ -30,34 +31,38 @@ const AdminNotifications: React.FC = () => {
       await notificationsApi.markNotificationRead(id);
       load();
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     }
   };
 
   const markAllRead = async () => {
     try {
       const r = await notificationsApi.markAllNotificationsRead();
-      alert(`Marked ${r.updated} notification(s) as read`);
+      success(`Marked ${r.updated} notification(s) as read`);
       load();
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     }
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm('Delete this notification?')) return;
+    const ok = await confirm({
+      title: 'Delete notification',
+      message: 'Delete this notification?',
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await notificationsApi.deleteNotification(id);
       load();
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     }
   };
 
   return (
     <>
-      {error && <div className="admin-alert-error"><i className="ri-error-warning-line" /> {error}</div>}
-
       <div className="admin-action-bar">
         <span className="admin-unread-pill">{unread.length} unread</span>
         <button type="button" className="admin-btn-sm outline" onClick={() => void markAllRead()}>

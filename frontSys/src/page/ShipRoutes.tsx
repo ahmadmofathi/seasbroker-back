@@ -4,11 +4,12 @@ import { useLocation } from 'react-router';
 import SectionHeading from '../component/Common/SectionHeading';
 import type { ShipRoute } from '../types/ship_route';
 import pb from '../utils/pocketbase';
+import { useAlert } from '../context/AlertContext';
 
 const ShipRoutes: React.FC = () => {
-  const [shipRoutes, setShipRoutes] = useState<ShipRoute[]>([]); // Set initial state to null
-  const [error, setError] = useState<null | string>(null); // Optional: to handle errors
-  const [filteredShipRoutes, setFilteredShipRoutes] = useState<ShipRoute[]>([]); // State for filtered ships
+  const [shipRoutes, setShipRoutes] = useState<ShipRoute[]>([]);
+  const [filteredShipRoutes, setFilteredShipRoutes] = useState<ShipRoute[]>([]);
+  const { error: showError, warning } = useAlert();
   console.log(shipRoutes);
 
   // Function to parse query parameters
@@ -30,11 +31,11 @@ const ShipRoutes: React.FC = () => {
           setShipRoutes(shipsData); // Set ships data
           setFilteredShipRoutes(shipsData); // Initially, show all ships
         } else {
-          setError("No ships found in this region.");
+          warning("No ships found in this region.");
         }
-      } catch (error) {
-        setError("Failed to fetch ships details");
-        console.error(error); // Log error for debugging
+      } catch (err) {
+        showError("Failed to fetch ships details");
+        console.error(err);
       }
     };
 
@@ -101,7 +102,6 @@ const ShipRoutes: React.FC = () => {
           <div className="row">
             <div className="col-12  col-md-12 col-sm-12">
               <div className="track_area_form">
-                {error && <p style={{ color: 'red' }}>{error}</p>}
 
                 {/* Display table of ships if data is available */}
                 {filteredShipRoutes.length > 0 ? (

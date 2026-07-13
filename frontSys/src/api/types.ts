@@ -144,6 +144,7 @@ export interface VesselAvailabilityRecord extends PocketBaseRecord {
   availableTo: string;
   openPort: string;
   destinationPort: string;
+  isActive?: boolean;
 }
 
 export type MatchStatus =

@@ -8,6 +8,7 @@ import "./assets/css/animate.min.css";
 import "./assets/css/fontawesome.all.min.css";
 import "./assets/css/color.css";
 import './index.css';
+import './assets/css/alerts.css';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';

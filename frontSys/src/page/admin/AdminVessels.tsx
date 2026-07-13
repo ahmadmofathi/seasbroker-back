@@ -1,8 +1,16 @@
 import { useEffect, useState } from 'react';
 import { vesselsApi } from '../../api';
 import AdminModal from '../../component/admin/AdminModal';
+import VesselAvailabilityModal from '../../component/admin/VesselAvailabilityModal';
 import { formatApiError } from '../../utils/formatApiError';
+import { useAlert } from '../../context/AlertContext';
 import type { VesselRecord, VesselStatus } from '../../api/types';
+import {
+  DEFAULT_VESSEL_TYPE,
+  vesselTypeSelectOptions,
+} from '../../constants/vesselTypes';
+import { VESSEL_STATUSES } from '../../constants/domainEnums';
+import { countrySelectOptions, portSelectOptions } from '../../utils/portOptions';
 
 type VesselForm = {
   name: string;
@@ -21,7 +29,7 @@ type VesselForm = {
 const emptyForm = (): VesselForm => ({
   name: '',
   imoNumber: '',
-  vesselType: '',
+  vesselType: DEFAULT_VESSEL_TYPE,
   dwt: '',
   lengthOverall: '',
   beam: '',
@@ -36,7 +44,7 @@ function fromVessel(v: VesselRecord): VesselForm {
   return {
     name: v.name ?? '',
     imoNumber: v.imoNumber ?? '',
-    vesselType: v.vesselType ?? '',
+    vesselType: v.vesselType?.trim() || DEFAULT_VESSEL_TYPE,
     dwt: String(v.dwt ?? ''),
     lengthOverall: String(v.lengthOverall ?? ''),
     beam: String(v.beam ?? ''),
@@ -66,20 +74,20 @@ function toPayload(form: VesselForm): Partial<VesselRecord> {
 
 const AdminVessels: React.FC = () => {
   const [vessels, setVessels] = useState<VesselRecord[]>([]);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<VesselForm>(emptyForm);
   const [editing, setEditing] = useState<VesselRecord | null>(null);
   const [open, setOpen] = useState(false);
+  const [availabilityVessel, setAvailabilityVessel] = useState<VesselRecord | null>(null);
+  const { error: showError, confirm, success } = useAlert();
 
   const load = () => {
     setLoading(true);
-    setError('');
     vesselsApi
       .listVessels()
       .then(setVessels)
-      .catch((e: unknown) => setError(formatApiError(e)))
+      .catch((e: unknown) => showError(formatApiError(e)))
       .finally(() => setLoading(false));
   };
 
@@ -112,42 +120,43 @@ const AdminVessels: React.FC = () => {
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
     try {
       const body = toPayload(form);
       if (editing) {
         await vesselsApi.updateVessel(editing.id, body);
       } else {
-        await vesselsApi.createVessel(body);
+        const created = await vesselsApi.createVessel(body);
+        success(`Vessel "${created.name}" created. Add an availability window to enable matching.`);
+        setAvailabilityVessel(created);
       }
       setOpen(false);
       setEditing(null);
       load();
     } catch (err) {
-      setError(formatApiError(err));
+      showError(formatApiError(err));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (v: VesselRecord) => {
-    if (!window.confirm(`Delete vessel "${v.name}"?`)) return;
+    const ok = await confirm({
+      title: 'Delete vessel',
+      message: `Delete vessel "${v.name}"?`,
+      confirmText: 'Delete',
+      variant: 'danger',
+    });
+    if (!ok) return;
     try {
       await vesselsApi.deleteVessel(v.id);
       load();
     } catch (err) {
-      setError(formatApiError(err));
+      showError(formatApiError(err));
     }
   };
 
   return (
     <>
-      {error && (
-        <div className="admin-alert-error">
-          <i className="ri-error-warning-line" /> {error}
-        </div>
-      )}
-
       <div className="admin-action-bar">
         <button type="button" className="admin-btn-sm primary" onClick={openCreate}>
           <i className="ri-add-line" /> Add Vessel
@@ -190,6 +199,13 @@ const AdminVessels: React.FC = () => {
                       </td>
                       <td>
                         <div className="admin-actions-cell">
+                          <button
+                            type="button"
+                            className="admin-btn-sm primary"
+                            onClick={() => setAvailabilityVessel(v)}
+                          >
+                            Availability
+                          </button>
                           <button
                             type="button"
                             className="admin-btn-sm outline"
@@ -246,7 +262,19 @@ const AdminVessels: React.FC = () => {
             </div>
             <div className="admin-field">
               <label htmlFor="v-type">Vessel Type</label>
-              <input id="v-type" className="admin-input" required value={form.vesselType} onChange={(e) => setField('vesselType', e.target.value)} />
+              <select
+                id="v-type"
+                className="admin-input"
+                required
+                value={form.vesselType}
+                onChange={(e) => setField('vesselType', e.target.value)}
+              >
+                {vesselTypeSelectOptions(form.vesselType).map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="admin-field">
               <label htmlFor="v-dwt">DWT</label>
@@ -266,18 +294,46 @@ const AdminVessels: React.FC = () => {
             </div>
             <div className="admin-field">
               <label htmlFor="v-port">Current Port</label>
-              <input id="v-port" className="admin-input" required value={form.currentPort} onChange={(e) => setField('currentPort', e.target.value)} />
+              <select
+                id="v-port"
+                className="admin-input"
+                required
+                value={form.currentPort}
+                onChange={(e) => setField('currentPort', e.target.value)}
+              >
+                <option value="">Select port…</option>
+                {portSelectOptions(form.currentPort).map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="admin-field">
               <label htmlFor="v-flag">Flag Country</label>
-              <input id="v-flag" className="admin-input" required value={form.flagCountry} onChange={(e) => setField('flagCountry', e.target.value)} />
+              <select
+                id="v-flag"
+                className="admin-input"
+                required
+                value={form.flagCountry}
+                onChange={(e) => setField('flagCountry', e.target.value)}
+              >
+                <option value="">Select country…</option>
+                {countrySelectOptions(form.flagCountry).map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="admin-field">
               <label htmlFor="v-status">Status</label>
               <select id="v-status" className="admin-input" value={form.status} onChange={(e) => setField('status', e.target.value as VesselStatus)}>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Maintenance">Maintenance</option>
+                {VESSEL_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {status}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="admin-field full">
@@ -286,6 +342,13 @@ const AdminVessels: React.FC = () => {
             </div>
           </form>
         </AdminModal>
+      )}
+
+      {availabilityVessel && (
+        <VesselAvailabilityModal
+          vessel={availabilityVessel}
+          onClose={() => setAvailabilityVessel(null)}
+        />
       )}
     </>
   );

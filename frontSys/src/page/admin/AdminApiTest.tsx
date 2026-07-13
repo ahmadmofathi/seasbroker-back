@@ -1,13 +1,19 @@
 import { useState } from 'react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { useAlert } from '../../context/AlertContext';
 import { runAllApiTests, HEALTH_CHECK_LABELS, type ApiTestResult } from '../../api/testRunner';
 
 const AdminApiTest: React.FC = () => {
   const [results, setResults] = useState<ApiTestResult[]>([]);
   const [running, setRunning] = useState(false);
   const { isAuthenticated } = useAdminAuth();
+  const { info } = useAlert();
 
   const runTests = async () => {
+    if (!isAuthenticated) {
+      info('Please sign in to run a full system health check.');
+      return;
+    }
     setRunning(true);
     try {
       setResults(await runAllApiTests());
@@ -21,12 +27,6 @@ const AdminApiTest: React.FC = () => {
 
   return (
     <>
-      {!isAuthenticated && (
-        <div className="admin-warn-box">
-          <i className="ri-information-line" /> Please sign in to run a full system health check.
-        </div>
-      )}
-
       <div className="admin-action-bar">
         <button type="button" className="admin-btn-sm primary" onClick={() => void runTests()} disabled={running}>
           <i className={running ? 'ri-loader-4-line' : 'ri-play-line'} />

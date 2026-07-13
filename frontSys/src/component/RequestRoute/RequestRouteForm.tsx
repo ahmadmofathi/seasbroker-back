@@ -1,39 +1,20 @@
 import { useState } from 'react';
-import ports from '../../utils/ports.json';
 import FormInput from '../Common/FormInput';
 import { quoteApi } from '../../api';
 import { formatApiError } from '../../utils/formatApiError';
+import { useAlert } from '../../context/AlertContext';
 import { withServiceTag } from '../../api/types';
+import { toVesselTypeOptions } from '../../constants/vesselTypes';
+import { toCargoTypeOptions } from '../../constants/cargoTypes';
+import { getPortOptions } from '../../utils/portOptions';
 
 const RequestRouteForm: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const { success, error: showError } = useAlert();
 
-  const vessel_types = [
-    { value: 'Bulk Carrier', text: 'Bulk Carrier' },
-    { value: 'Container Ship', text: 'Container Ship' },
-    { value: 'Tanker', text: 'Tanker' },
-    { value: 'Passenger Ship', text: 'Passenger Ship' },
-    { value: 'Other', text: 'Other' },
-  ];
-
-  const cargo_types = [
-    { value: 'General Cargo', text: 'General Cargo' },
-    { value: 'Gas', text: 'Gas' },
-    { value: 'Liquid', text: 'Liquid' },
-    { value: 'Heavy', text: 'Heavy' },
-    { value: 'Fragile', text: 'Fragile' },
-    { value: 'Perishable', text: 'Perishable' },
-    { value: 'Bulk', text: 'Bulk' },
-    { value: 'Dry', text: 'Dry' },
-    { value: 'Refrigerated', text: 'Refrigerated' },
-    { value: 'Other', text: 'Other' },
-  ];
-
-  const cities = Object.values(ports).map((port) => ({
-    text: `${port.name} - ${port.country}`,
-    value: `${port.name} - ${port.country}`,
-  }));
+  const vessel_types = toVesselTypeOptions();
+  const cargo_types = toCargoTypeOptions();
+  const cities = getPortOptions().map((p) => ({ text: p.label, value: p.value }));
 
   const handleSubmit: React.FormEventHandler = (e) => {
     e.preventDefault();
@@ -42,7 +23,6 @@ const RequestRouteForm: React.FC = () => {
 
   const submitRoute = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
     setSubmitting(true);
 
     const formData = new FormData(e.currentTarget as HTMLFormElement);
@@ -93,10 +73,13 @@ const RequestRouteForm: React.FC = () => {
         phoneNumber: brokerPhone,
       });
 
-      alert(response.message || 'Ship route registered successfully. Our team will review it in the admin panel.');
+      success(
+        response.message ||
+          'Ship route registered successfully. Our team will review it in the admin panel.',
+      );
       (e.currentTarget as HTMLFormElement).reset();
     } catch (err) {
-      setError(formatApiError(err));
+      showError(formatApiError(err));
     } finally {
       setSubmitting(false);
     }
@@ -114,12 +97,6 @@ const RequestRouteForm: React.FC = () => {
                     <h3>Register Ship Brokerage Route</h3>
                   </div>
                 </div>
-
-                {error && (
-                  <div className="col-lg-12">
-                    <div className="alert alert-danger">{error}</div>
-                  </div>
-                )}
 
                 <div className="col-lg-6">
                   <FormInput name="vessel_name" tag="input" type="text" classes="form-control" placeholder="Vessel Name" label="Vessel Name" />

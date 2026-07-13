@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { chatApi } from '../../api';
 import { formatApiError } from '../../utils/formatApiError';
+import { useAlert } from '../../context/AlertContext';
 import type { ChatRecord, MessageRecord } from '../../api/types';
 
 const AdminChats: React.FC = () => {
@@ -8,13 +9,13 @@ const AdminChats: React.FC = () => {
   const [selectedChat, setSelectedChat] = useState<ChatRecord | null>(null);
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [reply, setReply] = useState('');
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const { error: showError } = useAlert();
 
   useEffect(() => {
     chatApi.listChats()
       .then(setChats)
-      .catch((e: unknown) => setError(formatApiError(e)))
+      .catch((e: unknown) => showError(formatApiError(e)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -22,7 +23,7 @@ const AdminChats: React.FC = () => {
     setSelectedChat(chat);
     chatApi.listMessages(chat.id)
       .then(setMessages)
-      .catch((e: unknown) => setError(formatApiError(e)));
+      .catch((e: unknown) => showError(formatApiError(e)));
   };
 
   const sendReply = async () => {
@@ -33,7 +34,7 @@ const AdminChats: React.FC = () => {
       const updated = await chatApi.listMessages(selectedChat.id);
       setMessages(updated);
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     }
   };
 
@@ -43,8 +44,6 @@ const AdminChats: React.FC = () => {
 
   return (
     <>
-      {error && <div className="admin-alert-error"><i className="ri-error-warning-line" /> {error}</div>}
-
       <div className="admin-chat-grid">
         <div className="admin-panel" style={{ marginBottom: 0 }}>
           <div className="admin-panel-header">

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { cargoApi, quoteApi } from '../../api';
 import type { RequestedQuoteRecord } from '../../api/quote';
 import { formatApiError } from '../../utils/formatApiError';
+import { useAlert } from '../../context/AlertContext';
 
 function serviceFromNotes(info?: string): string {
   const match = info?.match(/^\[([^\]]+)\]/);
@@ -10,17 +11,16 @@ function serviceFromNotes(info?: string): string {
 
 const AdminQuotes: React.FC = () => {
   const [quotes, setQuotes] = useState<RequestedQuoteRecord[]>([]);
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [promotingId, setPromotingId] = useState<string | null>(null);
+  const { success, error: showError } = useAlert();
 
   const load = () => {
     setLoading(true);
-    setError('');
     quoteApi
       .listRequestedQuotes()
       .then(setQuotes)
-      .catch((e: unknown) => setError(formatApiError(e)))
+      .catch((e: unknown) => showError(formatApiError(e)))
       .finally(() => setLoading(false));
   };
 
@@ -30,7 +30,6 @@ const AdminQuotes: React.FC = () => {
 
   const promote = async (quote: RequestedQuoteRecord) => {
     setPromotingId(quote.id);
-    setError('');
     try {
       await cargoApi.promoteFromQuote({
         requestedQuoteId: quote.id,
@@ -38,10 +37,10 @@ const AdminQuotes: React.FC = () => {
         priority: 3,
       });
 
-      alert('Request promoted to a cargo listing. Open Cargo Listings to see it.');
+      success('Request promoted to a cargo listing. Open Cargo Listings to see it.');
       load();
     } catch (e) {
-      setError(formatApiError(e));
+      showError(formatApiError(e));
     } finally {
       setPromotingId(null);
     }
@@ -49,12 +48,6 @@ const AdminQuotes: React.FC = () => {
 
   return (
     <>
-      {error && (
-        <div className="admin-alert-error">
-          <i className="ri-error-warning-line" /> {error}
-        </div>
-      )}
-
       <div className="admin-action-bar">
         <button type="button" className="admin-btn-sm outline" onClick={load}>
           <i className="ri-refresh-line" /> Refresh
