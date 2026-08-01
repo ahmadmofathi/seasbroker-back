@@ -1,65 +1,20 @@
-import { useEffect, useState } from 'react';
-import { notificationsApi } from '../../api';
-import { formatApiError } from '../../utils/formatApiError';
-import { useAlert } from '../../context/AlertContext';
-import type { NotificationRecord } from '../../api/types';
+import { useEffect } from 'react';
+import { useAdminNotifications } from '../../context/AdminNotificationContext';
 
 const AdminNotifications: React.FC = () => {
-  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
-  const [unread, setUnread] = useState<NotificationRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { success, error: showError, confirm } = useAlert();
+  const {
+    notifications,
+    unread,
+    loading,
+    loadNotifications,
+    markRead,
+    markAllRead,
+    deleteNotification: remove,
+  } = useAdminNotifications();
 
-  const load = () => {
-    setLoading(true);
-    Promise.all([
-      notificationsApi.listNotifications(),
-      notificationsApi.listUnreadNotifications(),
-    ])
-      .then(([all, u]) => {
-        setNotifications(Array.isArray(all?.items) ? all.items : Array.isArray(all) ? all : []);
-        setUnread(Array.isArray(u) ? u : []);
-      })
-      .catch((e: unknown) => showError(formatApiError(e)))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const markRead = async (id: string) => {
-    try {
-      await notificationsApi.markNotificationRead(id);
-      load();
-    } catch (e) {
-      showError(formatApiError(e));
-    }
-  };
-
-  const markAllRead = async () => {
-    try {
-      const r = await notificationsApi.markAllNotificationsRead();
-      success(`Marked ${r.updated} notification(s) as read`);
-      load();
-    } catch (e) {
-      showError(formatApiError(e));
-    }
-  };
-
-  const remove = async (id: string) => {
-    const ok = await confirm({
-      title: 'Delete notification',
-      message: 'Delete this notification?',
-      confirmText: 'Delete',
-      variant: 'danger',
-    });
-    if (!ok) return;
-    try {
-      await notificationsApi.deleteNotification(id);
-      load();
-    } catch (e) {
-      showError(formatApiError(e));
-    }
-  };
+  useEffect(() => {
+    loadNotifications();
+  }, []);
 
   return (
     <>

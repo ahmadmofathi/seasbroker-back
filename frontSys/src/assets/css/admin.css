@@ -280,6 +280,7 @@
 .admin-nav-link {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   padding: 0.75rem 1rem;
   color: rgba(255, 255, 255, 0.7) !important;
@@ -288,6 +289,23 @@
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.2s;
+}
+
+.admin-nav-badge {
+  background: var(--admin-red);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 12px;
+  line-height: 1;
+  min-width: 20px;
+  text-align: center;
+}
+
+.admin-nav-link.active .admin-nav-badge {
+  background: #fff;
+  color: var(--admin-red);
 }
 
 .admin-nav-link i {

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate, Link } from 'react-router';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { useAdminNotifications } from '../../context/AdminNotificationContext';
 import logo from '../../assets/img/Logo_trans.png';
 import '../../assets/css/admin.css';
 
@@ -31,6 +32,7 @@ const AdminShell: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAdminAuth();
+  const { unread } = useAdminNotifications();
   const pageTitle = pageTitles[location.pathname] ?? 'Admin';
 
   const closeSidebar = () => setSidebarOpen(false);
@@ -58,18 +60,26 @@ const AdminShell: React.FC = () => {
         </div>
 
         <nav className="admin-nav">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              onClick={closeSidebar}
-              className={({ isActive }) => `admin-nav-link${isActive ? ' active' : ''}`}
-            >
-              <i className={item.icon} />
-              {item.label}
-            </NavLink>
-          ))}
+          {navItems.map((item) => {
+            const isNotifications = item.to === '/admin/notifications';
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                onClick={closeSidebar}
+                className={({ isActive }) => `admin-nav-link${isActive ? ' active' : ''}`}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <i className={item.icon} />
+                  <span>{item.label}</span>
+                </div>
+                {isNotifications && unread.length > 0 && (
+                  <span className="admin-nav-badge">{unread.length}</span>
+                )}
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="admin-sidebar-footer">

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router';
 import ScrollToTop from './component/Home/ScrollToTop';
 import { AdminAuthProvider } from './context/AdminAuthContext';
 import { AlertProvider } from './context/AlertContext';
+import { AdminNotificationProvider } from './context/AdminNotificationContext';
 
 import Navbar from './component/Common/Navbar/Navbar';
 import Footer from './component/Common/Footer';
@@ -70,21 +71,23 @@ const PublicLayout: React.FC = () => (
 
 const AdminRoutes: React.FC = () => (
   <AdminAuthProvider>
-    <Routes>
-      <Route path="login" element={<AdminLogin />} />
-      <Route element={<ProtectedAdminRoute />}>
-        <Route element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="quotes" element={<AdminQuotes />} />
-          <Route path="chats" element={<AdminChats />} />
-          <Route path="cargo" element={<AdminCargo />} />
-          <Route path="vessels" element={<AdminVessels />} />
-          <Route path="matching" element={<AdminMatching />} />
-          <Route path="notifications" element={<AdminNotifications />} />
-          <Route path="api-test" element={<AdminApiTest />} />
+    <AdminNotificationProvider>
+      <Routes>
+        <Route path="login" element={<AdminLogin />} />
+        <Route element={<ProtectedAdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="quotes" element={<AdminQuotes />} />
+            <Route path="chats" element={<AdminChats />} />
+            <Route path="cargo" element={<AdminCargo />} />
+            <Route path="vessels" element={<AdminVessels />} />
+            <Route path="matching" element={<AdminMatching />} />
+            <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="api-test" element={<AdminApiTest />} />
+          </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </AdminNotificationProvider>
   </AdminAuthProvider>
 );
 
