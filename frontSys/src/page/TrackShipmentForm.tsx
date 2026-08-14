@@ -87,7 +87,7 @@ const TrackShipmentForm: React.FC = () => {
     <>
       <section id="track_shipment_area">
         <div className="container">
-          <SectionHeading heading="Track Your Shipment" para="Solving your supply chain needs from end to end, taking the
+          <SectionHeading heading="Track Your Service" para="Solving your supply chain needs from end to end, taking the
         complexity out of container shipping. We are at the forefront of developing innovation."/>
           <div className="row">
             <div className="col-lg-8 offset-lg-2 col-md-12 col-sm-12 col-12">
@@ -134,7 +134,7 @@ const TrackShipmentForm: React.FC = () => {
 const TrackYourShip: React.FC = () => {
   return (
     <>
-      <CommonBanner heading="Track Your Shipment" page="Track Your Shipment" />
+      <CommonBanner heading="Track Your Service" page="Track Your Service" />
       <TrackShipmentForm />
       <OurPartner />
     </>

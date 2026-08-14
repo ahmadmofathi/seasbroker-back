@@ -119,7 +119,7 @@ const Chat: React.FC = () => {
               />
               <div className='flex flex-col'>
                 <span className='text-sm text-gray-500'>You are chatting with</span>
-                <span className='text-lg font-medium'>Dr. Ahmed Samir Shehata</span>
+                <span className='text-lg font-medium'>Customer Service</span>
               </div>
             </div>
             <div className='flex-1 overflow-y-auto mt-4'>

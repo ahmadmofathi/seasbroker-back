@@ -40,7 +40,7 @@ const AdminLogin: React.FC = () => {
         <div className="admin-login-brand">
           <div className="admin-login-brand-content">
             <img src={logo} alt="Seas Broker" />
-            <h1>SEAS BROKER</h1>
+            <h1>Seasbroker</h1>
             <p>
               Maritime logistics &amp; brokerage management platform. Secure
               admin access for operations, matching, and fleet control.
@@ -52,7 +52,7 @@ const AdminLogin: React.FC = () => {
           <div className="admin-login-card">
             <div className="login-logo">
               <img src={logo} alt="Seas Broker" />
-              <span>SEAS BROKER</span>
+              <span>Seasbroker</span>
             </div>
 
             <h2>Admin Sign In</h2>

@@ -19,7 +19,7 @@ const FooterItems: FooterProps[] = [
   {
     title: "Company",
     links: [
-      { title: "Track Your Shipment", route: "/track_ship" },
+      { title: "Track Your Service", route: "/track_ship" },
       { title: "Privacy Policy", route: "/privacyPolicy" },
       { title: "Terms & Condition", route: "/terms" },
     ],

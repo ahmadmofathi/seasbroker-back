@@ -52,13 +52,12 @@ const Navbar: React.FC = () => {
           <div className="transtics-nav">
             <div className="container">
               <nav className="navbar navbar-expand-md navbar-light">
-                <Link className="navbar-brand" to="/">
+                <Link className="navbar-brand" to="/" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <img src={logo} alt="logo" style={{ width: "80px" }} />
+                  <div className="logo-text" style={{ display: "inline-block", verticalAlign: "middle" }}>
+                    <h4 style={{ margin: 0, whiteSpace: "nowrap", fontSize: '1.25rem', fontWeight: 700 }}>Seasbroker</h4>
+                  </div>
                 </Link>
-                {/* Adjusted Text beside the logo to be in one line */}
-                <div className="logo-text" style={{ display: "inline-block", verticalAlign: "middle" }}>
-                  <h4 style={{ margin: 0, whiteSpace: "nowrap" }}>SEAS BROKER</h4>
-                </div>
                 <div className="mean-menu" id="navbarSupportedContent">
                   <ul className="navbar-nav">
                     {MenuData.map((item, index) => (

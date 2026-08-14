@@ -54,7 +54,7 @@ const AdminShell: React.FC = () => {
         <div className="admin-sidebar-header">
           <img src={logo} alt="Seas Broker" />
           <div className="brand-text">
-            <h3>SEAS BROKER</h3>
+            <h3>Seasbroker</h3>
             <span>Admin Panel</span>
           </div>
         </div>

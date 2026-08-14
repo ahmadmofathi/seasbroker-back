@@ -13,37 +13,30 @@ interface FormInputProps {
 }
 
 const FormInput: React.FC<FormInputProps> = ({ tag, name, type, placeholder, classes, label, options = [], multiSelect = false, val }) => {
-  const [selectedValues, setSelectedValues] = useState<any>(multiSelect ? [] : "");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedValues, setSelectedValues] = useState<string[]>([]);
+  const [singleValue, setSingleValue] = useState<string>("");
   const dropdownRef = useRef<any>(null);
 
-  const filteredOptions = options.filter((option) =>
-    option.text.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleOptionSelect = (value: any) => {
+  const handleOptionSelect = (value: string) => {
     if (multiSelect) {
       if (!selectedValues.includes(value)) {
-        setSelectedValues([...selectedValues, value]);
+        setSelectedValues((prev) => [...prev, value]);
       }
     } else {
-      setSelectedValues(value);
-      setShowDropdown(false);
+      setSingleValue(value);
     }
-    setSearchTerm("");
   };
 
-  const removeSelectedValue = (value: any) => {
+  const removeSelectedValue = (value: string) => {
     if (multiSelect) {
-      setSelectedValues(selectedValues.filter((v: any) => v !== value));
+      setSelectedValues((prev) => prev.filter((v) => v !== value));
     }
   };
 
   useEffect(() => {
-    const handleClickOutside = (event:any) => {
+    const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
+        // no-op: the simplified select variant does not use a custom popup list
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -79,75 +72,61 @@ const FormInput: React.FC<FormInputProps> = ({ tag, name, type, placeholder, cla
         <button className={`btn btn-theme`}>{val}</button>
       )}
 
-      {tag === 'select' && (
+      {tag === 'select' && !multiSelect && (
+        <select
+          name={name}
+          className={classes}
+          value={singleValue}
+          onChange={(e) => setSingleValue(e.target.value)}
+        >
+          <option value="">{placeholder || `Select ${label ?? name}`}</option>
+          {options.map((option, index) => (
+            <option key={`${option.value}-${index}`} value={option.value}>
+              {option.text}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {tag === 'select' && multiSelect && (
         <div className="dropdown">
-          <input
-            type="text"
-            placeholder={`Select ${label}`}
+          <select
+            name={`${name}-selector`}
             className={classes}
-            value={searchTerm}
+            value=""
             onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setShowDropdown(true);
+              const value = e.target.value;
+              if (value) {
+                handleOptionSelect(value);
+                e.currentTarget.value = '';
+              }
             }}
-            onClick={() => setShowDropdown(true)}
-          />
+          >
+            <option value="">{placeholder || `Select ${label ?? name}`}</option>
+            {options.map((option, index) => (
+              <option key={`${option.value}-${index}`} value={option.value}>
+                {option.text}
+              </option>
+            ))}
+          </select>
 
-          {showDropdown && (
-            <div
-              className="dropdown-menu show"
-              style={{
-                position: 'absolute',
-                zIndex: 1000,
-                width: '100%',
-                maxHeight: '200px', // Set a max height for the dropdown
-                overflowY: 'auto',  // Enable vertical scrolling
-                border: '1px solid #ddd', // Optional: Add border for better visibility
-                backgroundColor: '#fff', // Ensure it has a visible background
-              }}
-            >
-              {filteredOptions.length > 0 ? (
-                filteredOptions.map((option, index) => (
-                  <div
-                    key={index}
-                    className="dropdown-item"
-                    onClick={() => handleOptionSelect(option.value)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {option.text}
-                  </div>
-                ))
-              ) : (
-                <div className="dropdown-item">No results found</div>
-              )}
-            </div>
-          )}
+          <div className="selected-values">
+            {selectedValues.map((value, index) => (
+              <span
+                key={`${value}-${index}`}
+                className="badge badge-secondary"
+                style={{ marginRight: '5px', cursor: 'pointer' }}
+                onClick={() => removeSelectedValue(value)}
+              >
+                {value} ×
+              </span>
+            ))}
+          </div>
 
-
-          {multiSelect ? (
-            <div className="selected-values">
-              {selectedValues.map((value:any, index:any) => (
-                <span
-                  key={index}
-                  className="badge badge-secondary"
-                  style={{ marginRight: '5px', cursor: 'pointer' }}
-                  onClick={() => removeSelectedValue(value)}
-                >
-                  {value} ×
-                </span>
-              ))}
-            </div>
-          ) : (
-            <div className="selected-value">
-              {selectedValues && <span className="badge badge-secondary">{selectedValues}</span>}
-            </div>
-          )}
-
-          {/* Hidden input to include selected values in form submission */}
           <input
             type="hidden"
             name={name}
-            value={multiSelect ? selectedValues.join(",") : selectedValues}
+            value={selectedValues.join(',')}
           />
         </div>
       )}

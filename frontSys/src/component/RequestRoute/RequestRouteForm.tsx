@@ -41,6 +41,12 @@ const RequestRouteForm: React.FC = () => {
     const cargoTypes = formData.getAll('cargo_type').map(String);
     const totalWeight = String(formData.get('total_cargo_weight') ?? '0');
 
+    if (imo && !/^\d{7}$/.test(imo)) {
+      showError('IMO Number must be exactly 7 digits.');
+      setSubmitting(false);
+      return;
+    }
+
     const nameParts = brokerName.split(/\s+/).filter(Boolean);
     const fname = nameParts[0] || brokerName || 'Broker';
     const lname = nameParts.slice(1).join(' ') || 'Ship Route';
@@ -108,7 +114,7 @@ const RequestRouteForm: React.FC = () => {
                   <FormInput name="vessel_capacity" tag="input" type="number" classes="form-control" placeholder="Vessel Capacity" label="Vessel Capacity (Tons)" />
                 </div>
                 <div className="col-lg-6">
-                  <FormInput name="imo" tag="input" type="number" classes="form-control" placeholder="IMO Number" label="IMO Number" />
+                  <FormInput name="imo" tag="input" type="text" classes="form-control" placeholder="IMO Number" label="IMO Number" />
                 </div>
                 <div className="col-lg-6">
                   <FormInput name="departure_time" tag="input" type="datetime-local" classes="form-control" label="Departure Time" />

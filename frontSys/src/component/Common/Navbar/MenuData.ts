@@ -14,13 +14,13 @@ export const MenuData: MenuItemProps[] = [
   },
   {
     name: "About",
-    href: "about",
+    href: "/about",
     has_children: false,
     children: []
   },
   {
     name: "Services",
-    href: "service",
+    href: "/service",
     has_children: false,
     children: [
       {

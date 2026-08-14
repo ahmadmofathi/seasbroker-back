@@ -119,6 +119,11 @@ const AdminVessels: React.FC = () => {
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    const imo = form.imoNumber.trim();
+    if (imo && !/^\d{7}$/.test(imo)) {
+      showError('IMO Number must be exactly 7 digits.');
+      return;
+    }
     setSaving(true);
     try {
       const body = toPayload(form);
@@ -258,7 +263,7 @@ const AdminVessels: React.FC = () => {
             </div>
             <div className="admin-field">
               <label htmlFor="v-imo">IMO Number</label>
-              <input id="v-imo" className="admin-input" required value={form.imoNumber} onChange={(e) => setField('imoNumber', e.target.value)} />
+              <input id="v-imo" className="admin-input" required maxLength={7} inputMode="numeric" value={form.imoNumber} onChange={(e) => setField('imoNumber', e.target.value.replace(/\D/g, '').slice(0, 7))} />
             </div>
             <div className="admin-field">
               <label htmlFor="v-type">Vessel Type</label>
