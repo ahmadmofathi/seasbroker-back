@@ -1,5 +1,4 @@
-import { Link } from 'react-router';
-
+import { Link } from "react-router";
 
 const TopHeader: React.FC = () => {
   return (
@@ -37,7 +36,7 @@ const TopHeader: React.FC = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
 export default TopHeader;

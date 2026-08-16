@@ -1,5 +1,5 @@
-import React from 'react'
-import CountUp from 'react-countup';
+import React from "react";
+import CountUp from "react-countup";
 
 interface CounterItem {
   countStart: number;
@@ -15,19 +15,19 @@ const CounterData: CounterItem[] = [
     countEnd: 24,
     heading: "CUSTOMER SERVICE",
     icon: "fas fa-headset",
-    suffix: "/7"
+    suffix: "/7",
   },
   {
     countStart: 1,
     countEnd: 100,
     heading: "COUNTRIES SERVED",
-    icon: "fas fa-globe"
+    icon: "fas fa-globe",
   },
   {
     countStart: 1,
     countEnd: 2500,
     heading: "PORTS SERVED",
-    icon: " fas fa-ship"
+    icon: " fas fa-ship",
   },
 ];
 
@@ -44,7 +44,13 @@ const Counter: React.FC = () => {
                     <i className={data.icon}></i>
                   </div>
                   <div className="counter_count">
-                    <h2 className="count"><CountUp start={data.countStart} end={data.countEnd} suffix={data.suffix ?? ''} /></h2>
+                    <h2 className="count">
+                      <CountUp
+                        start={data.countStart}
+                        end={data.countEnd}
+                        suffix={data.suffix ?? ""}
+                      />
+                    </h2>
                     <h5>{data.heading}</h5>
                   </div>
                 </div>
@@ -54,8 +60,7 @@ const Counter: React.FC = () => {
         </div>
       </section>
     </>
-  )
-}
+  );
+};
 
 export default Counter;
-
