@@ -1,12 +1,21 @@
 import React from 'react'
 import CountUp from 'react-countup';
 
-const CounterData = [
+interface CounterItem {
+  countStart: number;
+  countEnd: number;
+  heading: string;
+  icon: string;
+  suffix?: string;
+}
+
+const CounterData: CounterItem[] = [
   {
-    countStart: 100,
-    countEnd: 12345,
-    heading: "COMPANY ESTABLISHED",
-    icon: " fas fa-building"
+    countStart: 24,
+    countEnd: 24,
+    heading: "CUSTOMER SERVICE",
+    icon: "fas fa-headset",
+    suffix: "/7"
   },
   {
     countStart: 1,
@@ -35,7 +44,7 @@ const Counter: React.FC = () => {
                     <i className={data.icon}></i>
                   </div>
                   <div className="counter_count">
-                    <h2 className="count"><CountUp start={data.countStart} end={data.countEnd} /></h2>
+                    <h2 className="count"><CountUp start={data.countStart} end={data.countEnd} suffix={data.suffix ?? ''} /></h2>
                     <h5>{data.heading}</h5>
                   </div>
                 </div>

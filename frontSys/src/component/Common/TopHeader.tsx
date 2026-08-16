@@ -26,7 +26,7 @@ const TopHeader: React.FC = () => {
             <div className="col-lg-6 col-md-12 col-sm-12 col-12">
               <ul className="right-info">
                 <li className="mr-20">
-                  <Link to="/contact">Support</Link>
+                  <Link to="/contact">24/7 Customer Service</Link>
                 </li>
                 <li className="mr-20">
                   <Link to="/track_ship">Track Your Service</Link>
