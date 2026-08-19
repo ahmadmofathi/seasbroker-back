@@ -2,7 +2,7 @@
  * Probe superuser auth — usage:
  *   node scripts/probe-auth.mjs <email> <password>
  */
-const BASE = process.env.VITE_API_URL || 'https://api.seasbroker.com';
+const BASE = process.env.VITE_API_URL || 'https://appapi.seasbroker.com';
 const [email, password] = process.argv.slice(2);
 
 if (!email || !password) {

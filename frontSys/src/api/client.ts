@@ -3,7 +3,7 @@ import { normalizeToken } from './authTokenStore';
 
 const REMOTE_API =
   (import.meta.env.VITE_API_URL as string | undefined) ??
-  'https://api.seasbroker.com';
+  'https://appapi.seasbroker.com';
 
 /** Always hit the configured API host (production by default), including local dev */
 export const API_BASE = REMOTE_API;

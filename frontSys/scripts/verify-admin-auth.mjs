@@ -8,7 +8,7 @@
  */
 import PocketBase from 'pocketbase';
 
-const BASE = process.env.VITE_API_URL || 'https://api.seasbroker.com';
+const BASE = process.env.VITE_API_URL || 'https://appapi.seasbroker.com';
 const email = process.env.ADMIN_EMAIL;
 const password = process.env.ADMIN_PASSWORD;
 
