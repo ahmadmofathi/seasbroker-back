@@ -2,7 +2,7 @@
  * CLI API test runner — run with: node scripts/test-api.mjs
  * Optional: pass superuser token as first arg for protected endpoint tests.
  */
-const BASE = process.env.VITE_API_URL || 'http://seasbreaker.runasp.net';
+const BASE = process.env.VITE_API_URL || 'https://api.seasbroker.com';
 const TOKEN = process.argv[2] || '';
 
 const results = [];
