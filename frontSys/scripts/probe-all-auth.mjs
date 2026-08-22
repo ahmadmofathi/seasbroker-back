@@ -2,7 +2,7 @@
  * Probe which endpoints accept PB token vs JWT.
  * Usage: ADMIN_EMAIL=... ADMIN_PASSWORD=... node scripts/probe-all-auth.mjs
  */
-const BASE = process.env.VITE_API_URL || 'http://seasbreaker.runasp.net';
+const BASE = process.env.VITE_API_URL || 'https://appapi.seasbroker.com';
 const email = process.env.ADMIN_EMAIL;
 const password = process.env.ADMIN_PASSWORD;
 

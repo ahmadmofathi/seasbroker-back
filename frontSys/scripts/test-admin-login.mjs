@@ -4,7 +4,7 @@
  *   set ADMIN_PASSWORD=yourpassword
  *   node scripts/test-admin-login.mjs
  */
-const BASE = process.env.VITE_API_URL || 'http://seasbreaker.runasp.net';
+const BASE = process.env.VITE_API_URL || 'https://appapi.seasbroker.com';
 const email = process.env.ADMIN_EMAIL;
 const password = process.env.ADMIN_PASSWORD;
 

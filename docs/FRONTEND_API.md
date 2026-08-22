@@ -8,7 +8,7 @@ This document describes how the frontend should call the SeasBroker backend. The
 
 | Environment | URL |
 |-------------|-----|
-| Production | `http://seasbreaker.runasp.net` |
+| Production | `https://appapi.seasbroker.com` |
 | Local dev | `https://localhost:{port}` (see launch settings) |
 
 All paths below are relative to the base URL.
