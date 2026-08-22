@@ -13,7 +13,7 @@ const OurTeam: React.FC = () => {
           <div className="row">
             {TeamData.map((data, index) => (
               <div className="col-lg-4 col-md-6 col-sm-12 col-12" key={index}>
-                <TeamCard img={data.img} para={data.para} name={data.name}
+                <TeamCard para={data.para} name={data.name}
                   des={data.des} />
               </div>
             ))}

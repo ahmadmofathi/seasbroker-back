@@ -73,7 +73,7 @@ builder.Services.AddControllers()
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
-builder.Services.AddOpenApi();
+// builder.Services.AddOpenApi();
 
 builder.Services.AddCors(options =>
 {
@@ -88,7 +88,7 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownIPNetworks.Clear();
+    options.KnownNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -100,11 +100,11 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
-    {
-        options.WithTitle("Seasbroker API");
-    });
+    // app.MapOpenApi();
+    // app.MapScalarApiReference(options =>
+    // {
+    //     options.WithTitle("Seasbroker API");
+    // });
 }
 
 

@@ -13,6 +13,8 @@ const navItems = [
   { to: '/admin/vessels', label: 'Vessels', icon: 'ri-anchor-line' },
   { to: '/admin/matching', label: 'Matching', icon: 'ri-links-line' },
   { to: '/admin/notifications', label: 'Notifications', icon: 'ri-notification-3-line' },
+  { to: '/admin/settings', label: 'System Settings', icon: 'ri-settings-4-line' },
+  { to: '/admin/faqs', label: 'FAQs', icon: 'ri-questionnaire-line' },
   { to: '/admin/api-test', label: 'System Health', icon: 'ri-pulse-line' },
 ];
 
@@ -24,6 +26,8 @@ const pageTitles: Record<string, string> = {
   '/admin/vessels': 'Vessels',
   '/admin/matching': 'Matching',
   '/admin/notifications': 'Notifications',
+  '/admin/settings': 'System Settings',
+  '/admin/faqs': 'FAQs',
   '/admin/api-test': 'System Health',
 };
 

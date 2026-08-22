@@ -1,19 +1,23 @@
 import React from 'react'
 
 interface TeamCardProps {
-  img: string;
   para: string;
   name: string;
   des: string;
 }
 
 // TeamCard Area
-const TeamCard: React.FC<TeamCardProps> = ({ img, para, name, des }) => {
+const TeamCard: React.FC<TeamCardProps> = ({ para, name, des }) => {
   return (
     <>
       <div className="team-member">
         <div className="team_inner">
-          <img src={img} className="img-responsive" alt="img_team" />
+          <div className="team_avatar" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '100%', aspectRatio: '1', background: 'linear-gradient(135deg, #0e3a6e 0%, #1a6fa8 100%)',
+          }}>
+            <i className="ri-user-3-fill" style={{ fontSize: '5rem', color: 'rgba(255,255,255,0.85)' }} />
+          </div>
           <div className="team_text">
             <p>{para}</p>
             <ul>

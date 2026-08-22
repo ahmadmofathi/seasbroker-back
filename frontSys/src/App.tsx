@@ -38,6 +38,8 @@ import AdminCargo from './page/admin/AdminCargo';
 import AdminVessels from './page/admin/AdminVessels';
 import AdminMatching from './page/admin/AdminMatching';
 import AdminNotifications from './page/admin/AdminNotifications';
+import AdminSettings from './page/admin/AdminSettings';
+import AdminFaqs from './page/admin/AdminFaqs';
 import AdminApiTest from './page/admin/AdminApiTest';
 
 const PublicLayout: React.FC = () => (
@@ -83,6 +85,8 @@ const AdminRoutes: React.FC = () => (
             <Route path="vessels" element={<AdminVessels />} />
             <Route path="matching" element={<AdminMatching />} />
             <Route path="notifications" element={<AdminNotifications />} />
+            <Route path="settings" element={<AdminSettings />} />
+            <Route path="faqs" element={<AdminFaqs />} />
             <Route path="api-test" element={<AdminApiTest />} />
           </Route>
         </Route>

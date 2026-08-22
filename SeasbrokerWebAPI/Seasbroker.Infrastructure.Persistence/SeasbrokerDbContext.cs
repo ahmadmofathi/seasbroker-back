@@ -38,6 +38,10 @@ public class SeasbrokerDbContext : IdentityDbContext<User, Role, Guid>
 
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+
+    public DbSet<Faq> Faqs => Set<Faq>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

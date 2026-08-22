@@ -475,6 +475,7 @@
 .admin-content {
   flex: 1;
   padding: 1.5rem;
+  overflow-y: auto;
 }
 
 @media (max-width: 575px) {
@@ -482,6 +483,24 @@
     padding: 1rem;
   }
 }
+
+/* ── Settings form grid ── */
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem 1.5rem;
+}
+
+.admin-form-grid .admin-field.full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 767px) {
+  .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 /* ── Dashboard cards ── */
 .admin-stats-grid {

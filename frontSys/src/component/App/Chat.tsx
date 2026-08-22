@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import profileImage from '../../assets/img/chat/Dr.Ahmed.jpg';
 import Cookies from 'js-cookie';
 import { recordToChatMessage, type ChatMessage } from "../../types/chatMessages";
 import { chatApi, signalrApi } from '../../api';
@@ -112,11 +111,9 @@ const Chat: React.FC = () => {
         chatWidgetVisible && (
           <div className='fixed bottom-32 right-4 bg-white p-6 rounded-lg shadow-lg w-112 h-[50%] flex flex-col justify-between z-50'>
             <div className="flex flex-row">
-              <img
-                src={profileImage}
-                alt="Dr. Ahmed Samir Shehata"
-                className="w-12 h-12 rounded-full mr-4"
-              />
+              <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center mr-4 text-white">
+                <i className="ri-customer-service-2-fill text-2xl" />
+              </div>
               <div className='flex flex-col'>
                 <span className='text-sm text-gray-500'>You are chatting with</span>
                 <span className='text-lg font-medium'>Customer Service</span>
