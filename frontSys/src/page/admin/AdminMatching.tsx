@@ -3,7 +3,7 @@ import { cargoApi, matchingApi, vesselsApi } from '../../api';
 import AdminModal from '../../component/admin/AdminModal';
 import { formatApiError } from '../../utils/formatApiError';
 import { useAlert } from '../../context/AlertContext';
-import type { CargoListingRecord, MatchRecord, VesselRecord } from '../../api/types';
+import type { CargoListingRecord, MatchingRuleRecord, MatchRecord, VesselRecord } from '../../api/types';
 
 function toMatchList(value: unknown): MatchRecord[] {
   return Array.isArray(value) ? value : [];
@@ -12,15 +12,11 @@ function toMatchList(value: unknown): MatchRecord[] {
 const MatchTable = ({
   title,
   data,
-  actions,
-  onApprove,
-  onReject,
+  renderActions,
 }: {
   title: string;
   data: MatchRecord[];
-  actions?: boolean;
-  onApprove?: (id: string) => void;
-  onReject?: (id: string) => void;
+  renderActions?: (m: MatchRecord) => React.ReactNode;
 }) => {
   const rows = toMatchList(data);
 
@@ -41,7 +37,7 @@ const MatchTable = ({
                 <th>Source</th>
                 <th>Cargo</th>
                 <th>Vessel</th>
-                {actions && <th>Actions</th>}
+                {renderActions && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -54,24 +50,9 @@ const MatchTable = ({
                   <td>{m.source}</td>
                   <td>{m.cargoListingId?.slice(0, 8)}</td>
                   <td>{m.vesselId?.slice(0, 8)}</td>
-                  {actions && (
+                  {renderActions && (
                     <td>
-                      <div className="admin-actions-cell">
-                        <button
-                          type="button"
-                          className="admin-btn-sm success"
-                          onClick={() => onApprove?.(m.id)}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          type="button"
-                          className="admin-btn-sm danger"
-                          onClick={() => onReject?.(m.id)}
-                        >
-                          Reject
-                        </button>
-                      </div>
+                      <div className="admin-actions-cell">{renderActions(m)}</div>
                     </td>
                   )}
                 </tr>
@@ -95,6 +76,9 @@ const AdminMatching: React.FC = () => {
   const [all, setAll] = useState<MatchRecord[]>([]);
   const [cargoOptions, setCargoOptions] = useState<CargoListingRecord[]>([]);
   const [vesselOptions, setVesselOptions] = useState<VesselRecord[]>([]);
+  const [rules, setRules] = useState<MatchingRuleRecord[]>([]);
+  const [ruleWeights, setRuleWeights] = useState<Record<string, string>>({});
+  const [savingRuleId, setSavingRuleId] = useState<string | null>(null);
   const [runResult, setRunResult] = useState('');
   const [loading, setLoading] = useState(true);
   const [openManual, setOpenManual] = useState(false);
@@ -116,15 +100,20 @@ const AdminMatching: React.FC = () => {
       matchingApi.listMatches(),
       cargoApi.listCargoListings(),
       vesselsApi.listVessels(),
+      matchingApi.listMatchingRules(),
     ])
       .then((results) => {
-        const [pendingResult, approvedResult, allResult, cargoResult, vesselResult] = results;
+        const [pendingResult, approvedResult, allResult, cargoResult, vesselResult, rulesResult] = results;
 
         setPending(pendingResult.status === 'fulfilled' ? toMatchList(pendingResult.value) : []);
         setApproved(approvedResult.status === 'fulfilled' ? toMatchList(approvedResult.value) : []);
         setAll(allResult.status === 'fulfilled' ? toMatchList(allResult.value) : []);
         setCargoOptions(cargoResult.status === 'fulfilled' ? cargoResult.value : []);
         setVesselOptions(vesselResult.status === 'fulfilled' ? vesselResult.value : []);
+
+        const ruleList = rulesResult.status === 'fulfilled' ? rulesResult.value : [];
+        setRules(ruleList);
+        setRuleWeights(Object.fromEntries(ruleList.map((r) => [r.id, String(r.weight)])));
 
         const firstError = results.find((r) => r.status === 'rejected') as
           | PromiseRejectedResult
@@ -168,6 +157,62 @@ const AdminMatching: React.FC = () => {
     }
   };
 
+  const expire = async (id: string) => {
+    try {
+      await matchingApi.expireMatch(id);
+      load();
+    } catch (e) {
+      showError(formatApiError(e));
+    }
+  };
+
+  const cancel = async (id: string) => {
+    try {
+      await matchingApi.cancelMatch(id, { reason: 'Cancelled via admin dashboard' });
+      load();
+    } catch (e) {
+      showError(formatApiError(e));
+    }
+  };
+
+  const complete = async (id: string) => {
+    try {
+      await matchingApi.completeMatch(id, { reason: 'Completed via admin dashboard' });
+      load();
+    } catch (e) {
+      showError(formatApiError(e));
+    }
+  };
+
+  const saveRuleWeight = async (rule: MatchingRuleRecord) => {
+    const weight = Number(ruleWeights[rule.id]);
+    if (Number.isNaN(weight)) {
+      showError('Weight must be a number.');
+      return;
+    }
+    setSavingRuleId(rule.id);
+    try {
+      await matchingApi.updateMatchingRule(rule.id, { weight });
+      load();
+    } catch (e) {
+      showError(formatApiError(e));
+    } finally {
+      setSavingRuleId(null);
+    }
+  };
+
+  const toggleRuleActive = async (rule: MatchingRuleRecord) => {
+    setSavingRuleId(rule.id);
+    try {
+      await matchingApi.updateMatchingRule(rule.id, { isActive: !rule.isActive });
+      load();
+    } catch (e) {
+      showError(formatApiError(e));
+    } finally {
+      setSavingRuleId(null);
+    }
+  };
+
   const createManual = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -206,14 +251,100 @@ const AdminMatching: React.FC = () => {
         </div>
       ) : (
         <>
+          <div className="admin-panel">
+            <div className="admin-panel-header">
+              <h2>Matching Rules ({rules.length})</h2>
+            </div>
+            <div className="admin-panel-body no-pad">
+              <div className="admin-table-wrap">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Criterion</th>
+                      <th>Weight</th>
+                      <th>Active</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rules.map((rule) => (
+                      <tr key={rule.id}>
+                        <td style={{ fontWeight: 500, color: 'var(--admin-navy)' }}>{rule.name}</td>
+                        <td>{rule.criterion}</td>
+                        <td>
+                          <input
+                            type="number"
+                            step="0.01"
+                            className="admin-input"
+                            style={{ width: 90 }}
+                            value={ruleWeights[rule.id] ?? ''}
+                            onChange={(e) =>
+                              setRuleWeights((prev) => ({ ...prev, [rule.id]: e.target.value }))
+                            }
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={rule.isActive}
+                            onChange={() => void toggleRuleActive(rule)}
+                          />
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="admin-btn-sm outline"
+                            disabled={savingRuleId === rule.id}
+                            onClick={() => void saveRuleWeight(rule)}
+                          >
+                            {savingRuleId === rule.id ? 'Saving…' : 'Save Weight'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {rules.length === 0 && (
+                  <div className="admin-empty">
+                    <p>No matching rules configured</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           <MatchTable
             title="Pending Approval"
             data={pending}
-            actions
-            onApprove={(id) => void approve(id)}
-            onReject={(id) => void reject(id)}
+            renderActions={(m) => (
+              <>
+                <button type="button" className="admin-btn-sm success" onClick={() => void approve(m.id)}>
+                  Approve
+                </button>
+                <button type="button" className="admin-btn-sm danger" onClick={() => void reject(m.id)}>
+                  Reject
+                </button>
+                <button type="button" className="admin-btn-sm outline" onClick={() => void expire(m.id)}>
+                  Expire
+                </button>
+              </>
+            )}
           />
-          <MatchTable title="Approved" data={approved} />
+          <MatchTable
+            title="Approved"
+            data={approved}
+            renderActions={(m) => (
+              <>
+                <button type="button" className="admin-btn-sm success" onClick={() => void complete(m.id)}>
+                  Complete
+                </button>
+                <button type="button" className="admin-btn-sm danger" onClick={() => void cancel(m.id)}>
+                  Cancel
+                </button>
+              </>
+            )}
+          />
           <MatchTable title="All Matches" data={all} />
         </>
       )}

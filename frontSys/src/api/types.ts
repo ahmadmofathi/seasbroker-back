@@ -174,7 +174,11 @@ export interface MatchRecord extends PocketBaseRecord {
 }
 
 export interface MatchingRuleRecord extends PocketBaseRecord {
-  [key: string]: unknown;
+  name: string;
+  criterion: string;
+  weight: number;
+  isActive: boolean;
+  configuration?: string;
 }
 
 export interface RunMatchingBody {
