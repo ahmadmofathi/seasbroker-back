@@ -19,6 +19,8 @@ using Seasbroker.Modules.Approval;
 
 using Seasbroker.Modules.Notifications;
 
+using Seasbroker.Modules.Forms;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -49,6 +51,8 @@ builder.Services.AddMatchingModule(builder.Configuration);
 
 builder.Services.AddApprovalModule();
 
+builder.Services.AddFormsModule(builder.Configuration);
+
 builder.Services.AddNotificationsModule();
 
 
@@ -68,6 +72,8 @@ builder.Services.AddControllers()
     .AddMatchingModuleControllers()
 
     .AddApprovalModuleControllers()
+
+    .AddFormsModuleControllers()
 
     .AddNotificationsModuleControllers();
 
@@ -129,6 +135,8 @@ app.UseCargoModule();
 app.UseMatchingModule();
 
 app.UseApprovalModule();
+
+app.UseFormsModule();
 
 app.UseNotificationsModule();
 

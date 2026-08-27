@@ -8,6 +8,7 @@
   <Project Path="Seasbroker.Modules.Matching/Seasbroker.Modules.Matching.csproj" />
   <Project Path="Seasbroker.Modules.Approval/Seasbroker.Modules.Approval.csproj" />
   <Project Path="Seasbroker.Modules.Notifications/Seasbroker.Modules.Notifications.csproj" />
+  <Project Path="Seasbroker.Modules.Forms/Seasbroker.Modules.Forms.csproj" />
   <Project Path="Seasbroker.Modules.Vessel.Tests/Seasbroker.Modules.Vessel.Tests.csproj" />
   <Project Path="Seasbroker.Modules.Cargo.Tests/Seasbroker.Modules.Cargo.Tests.csproj" />
   <Project Path="Seasbroker.Modules.Matching.Tests/Seasbroker.Modules.Matching.Tests.csproj" />
@@ -15,6 +16,7 @@
   <Project Path="Seasbroker.Modules.Notifications.Tests/Seasbroker.Modules.Notifications.Tests.csproj" />
   <Project Path="Seasbroker.Modules.Identity.Tests/Seasbroker.Modules.Identity.Tests.csproj" />
   <Project Path="Seasbroker.Modules.Chat.Tests/Seasbroker.Modules.Chat.Tests.csproj" />
+  <Project Path="Seasbroker.Modules.Forms.Tests/Seasbroker.Modules.Forms.Tests.csproj" />
   <Project Path="SeasbrokerWebAPI.IntegrationTests/SeasbrokerWebAPI.IntegrationTests.csproj" />
   <Project Path="SeasbrokerWebAPI/SeasbrokerWebAPI.csproj" />
 </Solution>

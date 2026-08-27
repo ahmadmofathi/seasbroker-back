@@ -28,6 +28,7 @@
     <ProjectReference Include="..\Seasbroker.Modules.Matching\Seasbroker.Modules.Matching.csproj" />
     <ProjectReference Include="..\Seasbroker.Modules.Approval\Seasbroker.Modules.Approval.csproj" />
     <ProjectReference Include="..\Seasbroker.Modules.Notifications\Seasbroker.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\Seasbroker.Modules.Forms\Seasbroker.Modules.Forms.csproj" />
   </ItemGroup>
 
   <ItemGroup>

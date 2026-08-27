@@ -42,6 +42,24 @@ public class SeasbrokerDbContext : IdentityDbContext<User, Role, Guid>
 
     public DbSet<Faq> Faqs => Set<Faq>();
 
+    public DbSet<FormDefinition> FormDefinitions => Set<FormDefinition>();
+
+    public DbSet<FormVersion> FormVersions => Set<FormVersion>();
+
+    public DbSet<FormSection> FormSections => Set<FormSection>();
+
+    public DbSet<FormField> FormFields => Set<FormField>();
+
+    public DbSet<FormFieldOption> FormFieldOptions => Set<FormFieldOption>();
+
+    public DbSet<FormFieldCondition> FormFieldConditions => Set<FormFieldCondition>();
+
+    public DbSet<FormSubmission> FormSubmissions => Set<FormSubmission>();
+
+    public DbSet<FormSubmissionValue> FormSubmissionValues => Set<FormSubmissionValue>();
+
+    public DbSet<FormSubmissionFile> FormSubmissionFiles => Set<FormSubmissionFile>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
