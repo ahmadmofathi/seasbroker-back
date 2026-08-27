@@ -227,6 +227,118 @@ export interface NotificationRecord {
   payload: string;
 }
 
+// ── Dynamic Form Builder ──
+
+export type FormFieldType =
+  | 'Text'
+  | 'Textarea'
+  | 'Number'
+  | 'Decimal'
+  | 'Date'
+  | 'DateTime'
+  | 'Time'
+  | 'Email'
+  | 'Phone'
+  | 'Select'
+  | 'MultiSelect'
+  | 'Radio'
+  | 'Checkbox'
+  | 'Toggle'
+  | 'File'
+  | 'MultiFile';
+
+export type FormFieldWidth = 'Full' | 'Half' | 'Third';
+
+export type FormConditionOperator =
+  | 'Equals'
+  | 'NotEquals'
+  | 'Contains'
+  | 'GreaterThan'
+  | 'GreaterThanOrEqual'
+  | 'LessThan'
+  | 'LessThanOrEqual'
+  | 'IsEmpty'
+  | 'IsNotEmpty'
+  | 'In'
+  | 'NotIn';
+
+export type FormConditionCombinator = 'AND' | 'OR';
+
+export type FormVersionStatus = 'Draft' | 'Published' | 'Archived';
+
+export interface FormFieldOption {
+  value: string;
+  label: string;
+  order: number;
+}
+
+export interface FormFieldValidation {
+  minLength?: number | null;
+  maxLength?: number | null;
+  min?: number | null;
+  max?: number | null;
+  pattern?: string | null;
+  fileMaxSizeMB?: number | null;
+  allowedExtensions?: string[] | null;
+  minSelections?: number | null;
+  maxSelections?: number | null;
+}
+
+export interface FormFieldCondition {
+  sourceFieldKey: string;
+  operator: FormConditionOperator;
+  value?: string | null;
+}
+
+export interface FormField {
+  key: string;
+  label: string;
+  type: FormFieldType;
+  placeholder?: string | null;
+  helpText?: string | null;
+  required: boolean;
+  visible: boolean;
+  order: number;
+  width: FormFieldWidth;
+  isSystemField: boolean;
+  systemFieldKey?: string | null;
+  defaultValue?: string | null;
+  options: FormFieldOption[];
+  validation?: FormFieldValidation | null;
+  conditionCombinator?: FormConditionCombinator | null;
+  conditions: FormFieldCondition[];
+}
+
+export interface FormSection {
+  key: string;
+  label: string;
+  order: number;
+  visible: boolean;
+  fields: FormField[];
+}
+
+export interface FormSchema {
+  formKey: string;
+  versionNumber: number;
+  status: FormVersionStatus;
+  sections: FormSection[];
+}
+
+export interface FormSummary {
+  key: string;
+  name: string;
+  description?: string | null;
+  publishedVersionNumber?: number | null;
+  publishedAt?: string | null;
+  draftVersionNumber?: number | null;
+  hasUnpublishedDraft: boolean;
+}
+
+export interface SubmitFormResponse {
+  submissionId: string;
+  requestedQuoteId?: string | null;
+}
+
 export interface ChatEvent {
   action: string;
   record: ChatRecord;

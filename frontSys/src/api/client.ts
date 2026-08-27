@@ -100,6 +100,29 @@ export async function api<T>(path: string, options: ApiRequestOptions = {}): Pro
   return parsed as T;
 }
 
+/** Like `api()`, but posts a FormData body (multipart/form-data) - used for file uploads. */
+export async function apiMultipart<T>(path: string, formData: FormData): Promise<T> {
+  const res = await fetch(buildUrl(path), {
+    method: 'POST',
+    body: formData,
+  });
+
+  const text = await res.text();
+  let parsed: unknown;
+  try {
+    parsed = text ? JSON.parse(text) : undefined;
+  } catch {
+    parsed = undefined;
+  }
+
+  if (!res.ok) {
+    const err = parsed as ApiError | undefined;
+    throw new SeasBrokerApiError(err?.message ?? `HTTP ${res.status}`, res.status, err?.data ?? {});
+  }
+
+  return parsed as T;
+}
+
 export interface ListQuery {
   page?: number;
   perPage?: number;

@@ -37,6 +37,7 @@ import AdminQuotes from './page/admin/AdminQuotes';
 import AdminCargo from './page/admin/AdminCargo';
 import AdminVessels from './page/admin/AdminVessels';
 import AdminMatching from './page/admin/AdminMatching';
+import AdminFormBuilder from './page/admin/AdminFormBuilder';
 import AdminNotifications from './page/admin/AdminNotifications';
 import AdminSettings from './page/admin/AdminSettings';
 import AdminFaqs from './page/admin/AdminFaqs';
@@ -84,6 +85,7 @@ const AdminRoutes: React.FC = () => (
             <Route path="cargo" element={<AdminCargo />} />
             <Route path="vessels" element={<AdminVessels />} />
             <Route path="matching" element={<AdminMatching />} />
+            <Route path="form-builder" element={<AdminFormBuilder />} />
             <Route path="notifications" element={<AdminNotifications />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="faqs" element={<AdminFaqs />} />
