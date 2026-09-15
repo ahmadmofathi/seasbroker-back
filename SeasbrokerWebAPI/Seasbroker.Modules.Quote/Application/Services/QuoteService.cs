@@ -24,6 +24,16 @@ public class QuoteService : IQuoteService
         CreateQuoteCommand command,
         CancellationToken cancellationToken = default)
     {
+        var departureTime = ParseDateOrThrow(command.DepartureTime, "departureTime");
+        var arrivalTime = ParseDateOrThrow(command.ArrivalTime, "arrivalTime");
+
+        if (departureTime >= arrivalTime)
+        {
+            throw new QuoteException(
+                "departureTime must be before arrivalTime.",
+                StatusCodes.Status400BadRequest);
+        }
+
         var existingCustomer = await _customerService.GetByEmailAsync(
             new GetCustomerByEmailQuery(command.Email),
             cancellationToken);
@@ -132,5 +142,34 @@ public class QuoteService : IQuoteService
             .FirstOrDefaultAsync(q => q.Id == quoteId, cancellationToken);
 
         return quote is null ? null : QuoteMapper.ToRecordDto(quote);
+    }
+
+    private static DateTime ParseDateOrThrow(string value, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new QuoteException(
+                $"{fieldName} is required and must be a valid date.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        if (DateTime.TryParse(
+                value,
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+                out var parsed))
+        {
+            return parsed;
+        }
+
+        if (DateTimeOffset.TryParse(value, out var offsetParsed))
+        {
+            return offsetParsed.UtcDateTime;
+        }
+
+        throw new QuoteException(
+            $"{fieldName} is required and must be a valid date.",
+            StatusCodes.Status400BadRequest,
+            value);
     }
 }

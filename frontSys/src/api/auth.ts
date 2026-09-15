@@ -166,17 +166,29 @@ export async function superuserLogin(
   };
 }
 
+/**
+ * Mint a fresh access token from the long-lived refresh token.
+ *
+ * The access token (60 min) backs both the "PocketBase-style" collections
+ * API and the JWT API — it's the same token, just presented via a different
+ * header style. Once it's actually expired, ASP.NET rejects it outright
+ * (there's no way to "refresh" an already-invalid Bearer token), so this
+ * must go through /api/auth/refresh with the 7-day refresh token instead.
+ */
 export async function superuserRefresh(): Promise<SuperuserAuthResponse> {
-  const token = pb.authStore.token || getPbToken();
-  if (!token) {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
     throw new SeasBrokerApiError('Not authenticated', 401);
   }
 
-  if (pb.authStore.token !== token) {
-    pb.authStore.save(token);
+  const response = await userRefresh(refreshToken);
+  if (!response.accessToken) {
+    throw new SeasBrokerApiError('Not authenticated', 401);
   }
 
-  return { token, record: pb.authStore.record as SuperuserAuthResponse['record'] };
+  setSuperuserToken(response.accessToken);
+
+  return { token: response.accessToken, record: pb.authStore.record as SuperuserAuthResponse['record'] };
 }
 
 export async function userLogin(email: string, password: string): Promise<UserAuthResponse> {

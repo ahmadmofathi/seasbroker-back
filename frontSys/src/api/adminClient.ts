@@ -9,7 +9,14 @@ import {
   updateRecord,
 } from './client';
 import type { ListQuery } from './client';
-import { getCollectionToken, getJwtToken, getRefreshToken, userRefresh } from './auth';
+import {
+  clearSuperuserToken,
+  getCollectionToken,
+  getJwtToken,
+  getRefreshToken,
+  superuserRefresh,
+  userRefresh,
+} from './auth';
 import { getAuthMode, setAuthMode } from './authTokenStore';
 import type { PaginatedResponse } from './types';
 
@@ -63,7 +70,39 @@ async function withCollectionAuth<T>(
     }
   }
 
-  throw lastError ?? new SeasBrokerApiError('Could not access this resource.', 401);
+  // Every known token was rejected — the access token has likely expired
+  // (e.g. the tab was idle past its 60-minute lifetime). Try minting a new
+  // one from the refresh token before giving up.
+  if (getRefreshToken()) {
+    try {
+      const refreshed = await superuserRefresh();
+      for (const style of styles) {
+        try {
+          const result = await fn(refreshed.token, style);
+          setAuthMode(style);
+          return result;
+        } catch (error) {
+          if (error instanceof SeasBrokerApiError && error.status === 401) {
+            lastError = error;
+            continue;
+          }
+          throw error;
+        }
+      }
+    } catch {
+      // Refresh token itself is invalid/expired — fall through below.
+    }
+  }
+
+  // Refresh didn't help (or wasn't possible): the session is genuinely
+  // over. Clear it so the reactive auth state redirects to /admin/login
+  // instead of leaving every admin page silently broken.
+  clearSuperuserToken();
+  throw new SeasBrokerApiError(
+    'Your session has expired. Please sign in again.',
+    401,
+    { cause: lastError?.message },
+  );
 }
 
 export async function adminList<T>(collection: string, query: ListQuery = {}): Promise<T[]> {
@@ -130,12 +169,17 @@ export async function adminRequest<T>(
   }
 
   if (getRefreshToken()) {
-    await userRefresh();
-    token = getJwtToken() ?? getCollectionToken() ?? token;
-    return call(token, 'bearer');
+    try {
+      await userRefresh();
+      token = getJwtToken() ?? getCollectionToken() ?? token;
+      return await call(token, 'bearer');
+    } catch {
+      // Refresh token itself is invalid/expired — fall through below.
+    }
   }
 
-  throw new SeasBrokerApiError('Could not access this resource.', 401);
+  clearSuperuserToken();
+  throw new SeasBrokerApiError('Your session has expired. Please sign in again.', 401);
 }
 
 export async function adminListPaginated<T>(
