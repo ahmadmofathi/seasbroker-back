@@ -29,6 +29,8 @@ export interface RequestedQuoteRecord {
   phoneNumber: string;
   customer?: string;
   status?: string;
+  isPromoted?: boolean;
+  cargoListingId?: string;
 }
 
 export async function submitQuote(data: QuoteRequest): Promise<QuoteSubmitResponse> {

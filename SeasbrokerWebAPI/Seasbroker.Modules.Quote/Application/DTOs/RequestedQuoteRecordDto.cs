@@ -57,4 +57,10 @@ public class RequestedQuoteRecordDto
 
     [JsonPropertyName("additionalInfo")]
     public string? AdditionalInfo { get; set; }
+
+    [JsonPropertyName("isPromoted")]
+    public bool IsPromoted { get; set; }
+
+    [JsonPropertyName("cargoListingId")]
+    public string? CargoListingId { get; set; }
 }

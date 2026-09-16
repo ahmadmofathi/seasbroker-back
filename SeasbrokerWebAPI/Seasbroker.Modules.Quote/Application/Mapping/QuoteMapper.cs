@@ -21,10 +21,14 @@ public static class QuoteMapper
         };
     }
 
-    public static RequestedQuoteRecordDto ToRecordDto(global::Seasbroker.Infrastructure.Persistence.Entities.RequestedQuote quote)
+    public static RequestedQuoteRecordDto ToRecordDto(
+        global::Seasbroker.Infrastructure.Persistence.Entities.RequestedQuote quote,
+        Guid? cargoListingId = null)
     {
         return new RequestedQuoteRecordDto
         {
+            IsPromoted = cargoListingId.HasValue,
+            CargoListingId = cargoListingId?.ToString(),
             Id = quote.Id.ToString(),
             CollectionId = QuoteConstants.RequestedQuotesCollectionName,
             CollectionName = QuoteConstants.RequestedQuotesCollectionName,

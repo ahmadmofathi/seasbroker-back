@@ -104,14 +104,20 @@ const AdminQuotes: React.FC = () => {
                       </td>
                       <td>
                         <div className="admin-actions-cell">
-                          <button
-                            type="button"
-                            className="admin-btn-sm primary"
-                            disabled={promotingId === q.id}
-                            onClick={() => void promote(q)}
-                          >
-                            {promotingId === q.id ? 'Promoting…' : 'Promote to Cargo'}
-                          </button>
+                          {q.isPromoted ? (
+                            <span className="admin-badge" title={q.cargoListingId ? `Cargo listing ${q.cargoListingId}` : undefined}>
+                              <i className="ri-checkbox-circle-line" /> Promoted
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="admin-btn-sm primary"
+                              disabled={promotingId === q.id}
+                              onClick={() => void promote(q)}
+                            >
+                              {promotingId === q.id ? 'Promoting…' : 'Promote to Cargo'}
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

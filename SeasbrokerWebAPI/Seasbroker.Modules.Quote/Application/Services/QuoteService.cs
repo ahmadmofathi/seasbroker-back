@@ -117,13 +117,21 @@ public class QuoteService : IQuoteService
 
         var totalPages = totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)perPage);
 
+        var quoteIds = quotes.Select(q => q.Id).ToList();
+        var promotedListingIdByQuoteId = await _dbContext.CargoListings
+            .AsNoTracking()
+            .Where(c => c.RequestedQuoteId != null && quoteIds.Contains(c.RequestedQuoteId.Value))
+            .ToDictionaryAsync(c => c.RequestedQuoteId!.Value, c => c.Id, cancellationToken);
+
         return new PocketBaseListResponse<RequestedQuoteRecordDto>
         {
             Page = page,
             PerPage = perPage,
             TotalItems = totalItems,
             TotalPages = totalPages,
-            Items = quotes.Select(QuoteMapper.ToRecordDto).ToList(),
+            Items = quotes
+                .Select(q => QuoteMapper.ToRecordDto(q, promotedListingIdByQuoteId.TryGetValue(q.Id, out var listingId) ? listingId : (Guid?)null))
+                .ToList(),
         };
     }
 
