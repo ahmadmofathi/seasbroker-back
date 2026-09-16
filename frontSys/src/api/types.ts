@@ -279,6 +279,7 @@ export interface FormFieldValidation {
   min?: number | null;
   max?: number | null;
   pattern?: string | null;
+  digitsOnly?: boolean | null;
   fileMaxSizeMB?: number | null;
   allowedExtensions?: string[] | null;
   minSelections?: number | null;

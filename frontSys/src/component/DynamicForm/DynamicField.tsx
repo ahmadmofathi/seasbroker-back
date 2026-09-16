@@ -203,17 +203,28 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
       );
       break;
 
-    default:
+    default: {
+      const digitsOnly = field.validation?.digitsOnly ?? false;
+      const maxLength = field.validation?.maxLength ?? undefined;
       control = (
         <input
           id={inputId}
           type={HTML_INPUT_TYPE[field.type] ?? 'text'}
           className={`form-control${invalidClass}`}
           placeholder={field.placeholder ?? undefined}
+          inputMode={digitsOnly ? 'numeric' : undefined}
+          maxLength={digitsOnly ? undefined : maxLength}
           value={(value as string) ?? ''}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            let next = e.target.value;
+            if (digitsOnly) next = next.replace(/\D/g, '');
+            if (maxLength != null) next = next.slice(0, maxLength);
+            onChange(next);
+          }}
         />
       );
+      break;
+    }
   }
 
   const isCheckLike = field.type === 'Checkbox' || field.type === 'Toggle';

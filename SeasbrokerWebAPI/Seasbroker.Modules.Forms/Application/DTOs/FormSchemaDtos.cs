@@ -139,6 +139,10 @@ public class FormFieldValidationDto
     [JsonPropertyName("pattern")]
     public string? Pattern { get; set; }
 
+    /// <summary>When true, the input strips non-digit keystrokes live instead of only rejecting them on submit.</summary>
+    [JsonPropertyName("digitsOnly")]
+    public bool? DigitsOnly { get; set; }
+
     [JsonPropertyName("fileMaxSizeMB")]
     public double? FileMaxSizeMB { get; set; }
 

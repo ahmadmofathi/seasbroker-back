@@ -206,7 +206,7 @@ public static class FormSeedData
                 Section("vessel-details", "Vessel Details", 0,
                     Text("vesselName", "Vessel Name", 0, required: true, width: FormFieldWidth.Half, placeholder: "e.g. Ocean Pioneer"),
                     Text("imoNumber", "IMO Number", 1, required: true, width: FormFieldWidth.Half, placeholder: "7-digit number",
-                        validation: new FormFieldValidationDto { Pattern = "^\\d{7}$" }),
+                        validation: new FormFieldValidationDto { Pattern = "^\\d{7}$", MaxLength = 7, DigitsOnly = true }),
                     Select("vesselType", "Vessel Type", 2, required: true, systemKey: FormsConstants.SystemFieldKeys.CargoType,
                         options: VesselTypeOptions)),
 
