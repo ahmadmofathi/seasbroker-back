@@ -36,6 +36,25 @@ function requireCollectionToken(): string {
   return token;
 }
 
+/**
+ * Retry once after a transient network failure (e.g. the tab was asleep/
+ * backgrounded and the first request after waking hits a not-yet-reconnected
+ * Wi-Fi/DNS). These surface as a raw fetch TypeError, not a SeasBrokerApiError
+ * with an HTTP status — so they must not be confused with a real 401 and
+ * must not clear the session, since the token itself is fine.
+ */
+async function withNetworkRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (error instanceof SeasBrokerApiError) {
+      throw error;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    return await fn();
+  }
+}
+
 async function withCollectionAuth<T>(
   fn: (token: string, style: 'raw' | 'bearer') => Promise<T>,
 ): Promise<T> {
@@ -106,19 +125,23 @@ async function withCollectionAuth<T>(
 }
 
 export async function adminList<T>(collection: string, query: ListQuery = {}): Promise<T[]> {
-  return withCollectionAuth(async (token, style) => {
-    const result = await listCollection<T>(collection, query, token, style);
-    return Array.isArray(result?.items) ? result.items : [];
-  });
+  return withNetworkRetry(() =>
+    withCollectionAuth(async (token, style) => {
+      const result = await listCollection<T>(collection, query, token, style);
+      return Array.isArray(result?.items) ? result.items : [];
+    }),
+  );
 }
 
 export async function adminGetOne<T>(collection: string, id: string): Promise<T> {
-  return withCollectionAuth((token, style) => getRecord<T>(collection, id, token, style));
+  return withNetworkRetry(() =>
+    withCollectionAuth((token, style) => getRecord<T>(collection, id, token, style)),
+  );
 }
 
 export async function adminCreate<T>(collection: string, body: unknown): Promise<T> {
-  return withCollectionAuth((token, style) =>
-    createRecord<T>(collection, body, token, style),
+  return withNetworkRetry(() =>
+    withCollectionAuth((token, style) => createRecord<T>(collection, body, token, style)),
   );
 }
 
@@ -127,13 +150,15 @@ export async function adminUpdate<T>(
   id: string,
   body: unknown,
 ): Promise<T> {
-  return withCollectionAuth((token, style) =>
-    updateRecord<T>(collection, id, body, token, style),
+  return withNetworkRetry(() =>
+    withCollectionAuth((token, style) => updateRecord<T>(collection, id, body, token, style)),
   );
 }
 
 export async function adminDelete(collection: string, id: string): Promise<void> {
-  await withCollectionAuth((token, style) => deleteRecord(collection, id, token, style));
+  await withNetworkRetry(() =>
+    withCollectionAuth((token, style) => deleteRecord(collection, id, token, style)),
+  );
 }
 
 export async function adminRequest<T>(
@@ -144,42 +169,44 @@ export async function adminRequest<T>(
     query?: Record<string, string | number | undefined>;
   } = {},
 ): Promise<T> {
-  let token = getJwtToken() ?? getCollectionToken();
-  if (!token) {
-    throw new SeasBrokerApiError('Please sign in to continue.', 401);
-  }
+  return withNetworkRetry(async () => {
+    let token = getJwtToken() ?? getCollectionToken();
+    if (!token) {
+      throw new SeasBrokerApiError('Please sign in to continue.', 401);
+    }
 
-  const call = (authToken: string, authStyle: 'bearer' | 'raw') =>
-    api<T>(path, {
-      method: options.method ?? 'GET',
-      body: options.body,
-      query: options.query,
-      token: authToken,
-      authStyle,
-    });
+    const call = (authToken: string, authStyle: 'bearer' | 'raw') =>
+      api<T>(path, {
+        method: options.method ?? 'GET',
+        body: options.body,
+        query: options.query,
+        token: authToken,
+        authStyle,
+      });
 
-  for (const authStyle of ['bearer', 'raw'] as const) {
-    try {
-      return await call(token, authStyle);
-    } catch (error) {
-      if (!(error instanceof SeasBrokerApiError && error.status === 401)) {
-        throw error;
+    for (const authStyle of ['bearer', 'raw'] as const) {
+      try {
+        return await call(token, authStyle);
+      } catch (error) {
+        if (!(error instanceof SeasBrokerApiError && error.status === 401)) {
+          throw error;
+        }
       }
     }
-  }
 
-  if (getRefreshToken()) {
-    try {
-      await userRefresh();
-      token = getJwtToken() ?? getCollectionToken() ?? token;
-      return await call(token, 'bearer');
-    } catch {
-      // Refresh token itself is invalid/expired — fall through below.
+    if (getRefreshToken()) {
+      try {
+        await userRefresh();
+        token = getJwtToken() ?? getCollectionToken() ?? token;
+        return await call(token, 'bearer');
+      } catch {
+        // Refresh token itself is invalid/expired — fall through below.
+      }
     }
-  }
 
-  clearSuperuserToken();
-  throw new SeasBrokerApiError('Your session has expired. Please sign in again.', 401);
+    clearSuperuserToken();
+    throw new SeasBrokerApiError('Your session has expired. Please sign in again.', 401);
+  });
 }
 
 export async function adminListPaginated<T>(
