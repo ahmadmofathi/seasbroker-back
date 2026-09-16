@@ -245,7 +245,8 @@ export type FormFieldType =
   | 'Checkbox'
   | 'Toggle'
   | 'File'
-  | 'MultiFile';
+  | 'MultiFile'
+  | 'Port';
 
 export type FormFieldWidth = 'Full' | 'Half' | 'Third';
 

@@ -41,8 +41,8 @@ public static class FormSeedData
                         validation: new FormFieldValidationDto { Min = 0 })),
 
                 Section("shipment-route", "Shipment Route", 1,
-                    Text("departurePort", "Departure / Loading Port", 0, required: true, systemKey: FormsConstants.SystemFieldKeys.DeparturePort, width: FormFieldWidth.Half),
-                    Text("arrivalPort", "Arrival / Discharge Port", 1, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalPort, width: FormFieldWidth.Half),
+                    Port("departurePort", "Departure / Loading Port", 0, required: true, systemKey: FormsConstants.SystemFieldKeys.DeparturePort, width: FormFieldWidth.Half),
+                    Port("arrivalPort", "Arrival / Discharge Port", 1, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalPort, width: FormFieldWidth.Half),
                     Date("cargoReadyDate", "Cargo Ready Date", 2, required: true, systemKey: FormsConstants.SystemFieldKeys.DepartureTime, width: FormFieldWidth.Half),
                     Date("estimatedArrivalDate", "Estimated Arrival Date", 3, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half),
                     Select("dangerousGoods", "Dangerous Goods?", 4, required: true, options: YesNoOptions, width: FormFieldWidth.Half),
@@ -254,7 +254,7 @@ public static class FormSeedData
                     Text("yearBuilt", "Year Built", 1, required: true, width: FormFieldWidth.Third, placeholder: "YYYY",
                         validation: new FormFieldValidationDto { Pattern = "^\\d{4}$" }),
                     Select("flag", "Flag", 2, required: true, width: FormFieldWidth.Third, options: CountryOptions),
-                    Text("currentOpenPort", "Current / Open Port", 3, required: true, systemKey: FormsConstants.SystemFieldKeys.DeparturePort, width: FormFieldWidth.Half),
+                    Port("currentOpenPort", "Current / Open Port", 3, required: true, systemKey: FormsConstants.SystemFieldKeys.DeparturePort, width: FormFieldWidth.Half),
                     Date("openDateFrom", "Open Date From", 4, required: true, systemKey: FormsConstants.SystemFieldKeys.DepartureTime, width: FormFieldWidth.Third),
                     Date("openDateTo", "Open Date To", 5, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Third),
                     Number("draft", "Draft (m)", 6, width: FormFieldWidth.Third),
@@ -286,10 +286,10 @@ public static class FormSeedData
                 Section("availability", "Availability Details", 9,
                     Select("availabilityType", "Availability Type", 0, required: true, width: FormFieldWidth.Third,
                         options: new[] { ("Open Vessel", "Open Vessel"), ("Scheduled Route", "Scheduled Route") }),
-                    ConditionalOn("availabilityType", "Open Vessel", Text("preferredTradingArea", "Preferred Trading Area", 1, width: FormFieldWidth.Half)),
-                    ConditionalOn("availabilityType", "Open Vessel", Text("preferredDestinationArea", "Preferred Destination Area", 2, width: FormFieldWidth.Half)),
-                    ConditionalOn("availabilityType", "Scheduled Route", Text("schedDeparturePort", "Departure Port", 3, required: true, width: FormFieldWidth.Half)),
-                    ConditionalOn("availabilityType", "Scheduled Route", Text("schedDestinationPort", "Destination Port", 4, required: true, width: FormFieldWidth.Half)),
+                    ConditionalOn("availabilityType", "Open Vessel", Port("preferredTradingArea", "Preferred Trading Area", 1, width: FormFieldWidth.Half)),
+                    ConditionalOn("availabilityType", "Open Vessel", Port("preferredDestinationArea", "Preferred Destination Area", 2, width: FormFieldWidth.Half)),
+                    ConditionalOn("availabilityType", "Scheduled Route", Port("schedDeparturePort", "Departure Port", 3, required: true, width: FormFieldWidth.Half)),
+                    ConditionalOn("availabilityType", "Scheduled Route", Port("schedDestinationPort", "Destination Port", 4, required: true, width: FormFieldWidth.Half)),
                     ConditionalOn("availabilityType", "Scheduled Route", Date("schedDepartureDate", "Departure Date", 5, required: true, width: FormFieldWidth.Half)),
                     ConditionalOn("availabilityType", "Scheduled Route", Field("schedEta", "ETA", FormFieldType.DateTime, 6, required: true, width: FormFieldWidth.Half)),
                     ConditionalOn("availabilityType", "Scheduled Route", Text("transitPorts", "Transit Ports", 7))),
@@ -313,7 +313,7 @@ public static class FormSeedData
                     Select("clearanceType", "Clearance Type", 0, required: true, systemKey: "ClearanceType", width: FormFieldWidth.Half,
                         options: new[] { ("Import", "Import"), ("Export", "Export"), ("Transit", "Transit"), ("Temporary Import-Export", "Temporary Import-Export") }),
                     Select("countryOfClearance", "Country of Clearance", 1, required: true, width: FormFieldWidth.Half, options: CountryOptions),
-                    Text("portOfClearance", "Port / Customs Office", 2, required: true, width: FormFieldWidth.Half),
+                    Port("portOfClearance", "Port / Customs Office", 2, required: true, width: FormFieldWidth.Half),
                     Select("countryOfOrigin", "Country of Origin", 3, required: true, width: FormFieldWidth.Half, options: CountryOptions),
                     Select("countryOfExport", "Country of Export", 4, required: true, width: FormFieldWidth.Half, options: CountryOptions),
                     Date("arrivalDate", "Expected Arrival / Departure Date", 5, required: true, systemKey: FormsConstants.SystemFieldKeys.DepartureTime, width: FormFieldWidth.Half),
@@ -520,6 +520,9 @@ public static class FormSeedData
 
     private static FormFieldDto File(string key, string label, int order, bool required = false, string width = "Full") =>
         Field(key, label, FormFieldType.File, order, required, null, width);
+
+    private static FormFieldDto Port(string key, string label, int order, bool required = false, string? systemKey = null, string width = "Full") =>
+        Field(key, label, FormFieldType.Port, order, required, systemKey, width);
 
     private static FormFieldDto ConditionalOn(string sourceKey, string value, FormFieldDto field) =>
         WithConditions(field, new[] { (sourceKey, value) });

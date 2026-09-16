@@ -1,5 +1,8 @@
+import { useMemo } from 'react';
 import type { FormField } from '../../api/types';
 import type { FieldValue } from './conditionEngine';
+import FormSelect from '../Common/FormSelect';
+import ports from '../../utils/ports.json';
 
 interface DynamicFieldProps {
   field: FormField;
@@ -25,9 +28,15 @@ const HTML_INPUT_TYPE: Partial<Record<FormField['type'], string>> = {
   Phone: 'tel',
 };
 
+const portOptions = Object.values(ports).map((port) => ({
+  text: `${port.name} - ${port.country}`,
+  value: `${port.name} - ${port.country}`,
+}));
+
 const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChange }) => {
   const inputId = `df-${field.key}`;
   const invalidClass = error ? ' is-invalid' : '';
+  const portFormData = useMemo(() => ({ port: (value as string) ?? '' }), [value]);
 
   const label = (
     <label htmlFor={inputId} className="form-label">
@@ -70,6 +79,22 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
             </option>
           ))}
         </select>
+      );
+      break;
+
+    case 'Port':
+      control = (
+        <FormSelect<{ port: string }>
+          placeholder={field.placeholder ?? 'Search ports...'}
+          options={portOptions}
+          formField="port"
+          error={error ?? ''}
+          formData={portFormData}
+          setFormData={(update) => {
+            const next = typeof update === 'function' ? update(portFormData) : update;
+            onChange(next.port);
+          }}
+        />
       );
       break;
 

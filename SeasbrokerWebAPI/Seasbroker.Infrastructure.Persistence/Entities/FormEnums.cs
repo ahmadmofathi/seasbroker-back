@@ -25,11 +25,12 @@ public static class FormFieldType
     public const string Toggle = "Toggle";
     public const string File = "File";
     public const string MultiFile = "MultiFile";
+    public const string Port = "Port";
 
     public static readonly IReadOnlySet<string> All = new HashSet<string>
     {
         Text, Textarea, Number, Decimal, Date, DateTime, Time, Email, Phone,
-        Select, MultiSelect, Radio, Checkbox, Toggle, File, MultiFile,
+        Select, MultiSelect, Radio, Checkbox, Toggle, File, MultiFile, Port,
     };
 
     public static readonly IReadOnlySet<string> OptionBased = new HashSet<string>
