@@ -299,7 +299,8 @@ public static class FormSeedData
                 Section("additional-information", "Additional Information", 10,
                     Textarea("remarks", "Remarks", 0, systemKey: FormsConstants.SystemFieldKeys.AdditionalInfo)),
 
-                ContactSection(11, firstNameLabel: "Contact Person", lastNameLabel: "Company Name"),
+                ContactSection(11, firstNameLabel: "Company Name", lastNameLabel: "Contact Person",
+                    middleFields: new[] { Text("position", "Position", 0, required: true, width: FormFieldWidth.Half) }),
             },
         });
 
@@ -377,11 +378,12 @@ public static class FormSeedData
                     File("sdsMsdsDoc", "SDS / MSDS", 5, width: FormFieldWidth.Third),
                     File("otherSupportingDocs", "Other Supporting Documents", 6, width: FormFieldWidth.Third)),
 
-                Section("additional-information", "Additional Information", 9,
-                    Text("taxVatNumber", "Tax / VAT Number", 0, width: FormFieldWidth.Half),
-                    Textarea("remarks", "Special Instructions / Remarks", 1, systemKey: FormsConstants.SystemFieldKeys.AdditionalInfo)),
-
-                ContactSection(10, firstNameLabel: "Contact Person", lastNameLabel: "Company Name"),
+                ContactSection(9, firstNameLabel: "Company Name", lastNameLabel: "Contact Person",
+                    trailingFields: new FormFieldDto[]
+                    {
+                        Text("taxVatNumber", "Tax / VAT Number", 0, width: FormFieldWidth.Half),
+                        Textarea("remarks", "Special Instructions / Remarks", 0, systemKey: FormsConstants.SystemFieldKeys.AdditionalInfo),
+                    }),
             },
         });
 
@@ -466,12 +468,33 @@ public static class FormSeedData
             Fields = fields.ToList(),
         };
 
-    private static FormSectionDto ContactSection(int order, string firstNameLabel = "First Name", string lastNameLabel = "Last Name") =>
-        Section("contact-information", "Contact Information", order,
-            Field("firstName", firstNameLabel, FormFieldType.Text, 0, required: true, systemKey: FormsConstants.SystemFieldKeys.FirstName, width: FormFieldWidth.Half),
-            Field("lastName", lastNameLabel, FormFieldType.Text, 1, required: true, systemKey: FormsConstants.SystemFieldKeys.LastName, width: FormFieldWidth.Half),
-            Field("email", "Email", FormFieldType.Email, 2, required: true, systemKey: FormsConstants.SystemFieldKeys.Email, width: FormFieldWidth.Half),
-            Field("phoneNumber", "Phone Number", FormFieldType.Phone, 3, required: true, systemKey: FormsConstants.SystemFieldKeys.PhoneNumber, width: FormFieldWidth.Half));
+    private static FormSectionDto ContactSection(
+        int order,
+        string firstNameLabel = "First Name",
+        string lastNameLabel = "Last Name",
+        FormFieldDto[]? middleFields = null,
+        FormFieldDto[]? trailingFields = null)
+    {
+        var fields = new List<FormFieldDto>();
+        var o = 0;
+        fields.Add(Field("firstName", firstNameLabel, FormFieldType.Text, o++, required: true, systemKey: FormsConstants.SystemFieldKeys.FirstName, width: FormFieldWidth.Half));
+        fields.Add(Field("lastName", lastNameLabel, FormFieldType.Text, o++, required: true, systemKey: FormsConstants.SystemFieldKeys.LastName, width: FormFieldWidth.Half));
+        foreach (var f in middleFields ?? Array.Empty<FormFieldDto>())
+        {
+            f.Order = o++;
+            fields.Add(f);
+        }
+
+        fields.Add(Field("email", "Email", FormFieldType.Email, o++, required: true, systemKey: FormsConstants.SystemFieldKeys.Email, width: FormFieldWidth.Half));
+        fields.Add(Field("phoneNumber", "Phone Number", FormFieldType.Phone, o++, required: true, systemKey: FormsConstants.SystemFieldKeys.PhoneNumber, width: FormFieldWidth.Half));
+        foreach (var f in trailingFields ?? Array.Empty<FormFieldDto>())
+        {
+            f.Order = o++;
+            fields.Add(f);
+        }
+
+        return Section("contact-information", "Contact Information", order, fields.ToArray());
+    }
 
     private static FormFieldDto Field(
         string key, string label, string type, int order,
