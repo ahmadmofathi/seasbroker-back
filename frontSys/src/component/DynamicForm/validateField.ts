@@ -50,6 +50,18 @@ export function validateField(field: FormField, value: FieldValue): string | nul
     return null;
   }
 
+  if (field.type === 'Date' || field.type === 'DateTime') {
+    if (v?.noPastDates) {
+      const parsed = new Date(value as string);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (!Number.isNaN(parsed.getTime()) && parsed < today) {
+        return `${field.label} cannot be a date in the past.`;
+      }
+    }
+    return null;
+  }
+
   if (isFile) {
     for (const file of files) {
       if (v?.fileMaxSizeMB != null && file.size > v.fileMaxSizeMB * 1024 * 1024) {

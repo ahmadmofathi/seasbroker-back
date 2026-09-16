@@ -143,6 +143,16 @@ public class FormFieldValidationDto
     [JsonPropertyName("digitsOnly")]
     public bool? DigitsOnly { get; set; }
 
+    /// <summary>Date/DateTime only: rejects a date earlier than today (UTC date, ignoring time-of-day).</summary>
+    [JsonPropertyName("noPastDates")]
+    public bool? NoPastDates { get; set; }
+
+    /// <summary>Number/Decimal only: permits a leading minus sign. Off by default - most numeric
+    /// fields (weights, counts, capacities) can never be negative; only set this for fields that
+    /// genuinely can be (e.g. sub-zero temperatures).</summary>
+    [JsonPropertyName("allowNegative")]
+    public bool? AllowNegative { get; set; }
+
     [JsonPropertyName("fileMaxSizeMB")]
     public double? FileMaxSizeMB { get; set; }
 

@@ -55,7 +55,7 @@ public static class FormSeedData
                     ConditionalOn("dangerousGoods", "Yes", Text("imoClass", "IMO/IMDG Class", 2, required: true, width: FormFieldWidth.Third)),
                     ConditionalOn("dangerousGoods", "Yes", Select("packingGroup", "Packing Group", 3, required: true, width: FormFieldWidth.Third,
                         options: new[] { ("I", "I"), ("II", "II"), ("III", "III"), ("N/A", "N/A") })),
-                    ConditionalOn("dangerousGoods", "Yes", Number("flashPointDg", "Flash Point (°C)", 4, width: FormFieldWidth.Third)),
+                    ConditionalOn("dangerousGoods", "Yes", Number("flashPointDg", "Flash Point (°C)", 4, width: FormFieldWidth.Third, validation: AllowNegative)),
                     ConditionalOn("dangerousGoods", "Yes", Select("marinePollutant", "Marine Pollutant", 5, options: YesNoOptions, width: FormFieldWidth.Third)),
                     ConditionalOn("dangerousGoods", "Yes", File("sdsFile", "SDS/MSDS", 6))),
 
@@ -137,14 +137,14 @@ public static class FormSeedData
                     ConditionalOnCargoType("Liquid Bulk", Text("liquidProductName", "Product Name", 0, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Liquid Bulk", Number("liquidQuantity", "Quantity (MT)", 1, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Liquid Bulk", Text("liquidDensity", "Density (kg/m³ @ °C)", 2, required: true, width: FormFieldWidth.Third)),
-                    ConditionalOnCargoType("Liquid Bulk", Number("liquidLoadingTemp", "Loading Temperature (°C)", 3, required: true, width: FormFieldWidth.Third)),
+                    ConditionalOnCargoType("Liquid Bulk", Number("liquidLoadingTemp", "Loading Temperature (°C)", 3, required: true, width: FormFieldWidth.Third, validation: AllowNegative)),
                     ConditionalOnCargoType("Liquid Bulk", Number("liquidGrades", "Number of Grades", 4, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Liquid Bulk", Select("liquidHeatingRequired", "Heating Required?", 5, required: true, options: YesNoOptions, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Liquid Bulk", Number("liquidLoadingRate", "Loading Rate (m³/h)", 6, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Liquid Bulk", Number("liquidDischargeRate", "Discharge Rate (m³/h)", 7, required: true, width: FormFieldWidth.Third)),
-                    ConditionalOnCargoType("Liquid Bulk", Number("liquidFlashPoint", "Flash Point (°C)", 8, width: FormFieldWidth.Third)),
+                    ConditionalOnCargoType("Liquid Bulk", Number("liquidFlashPoint", "Flash Point (°C)", 8, width: FormFieldWidth.Third, validation: AllowNegative)),
                     ConditionalOnCargoType("Liquid Bulk", Text("liquidViscosity", "Viscosity (cSt @ °C)", 9, width: FormFieldWidth.Third)),
-                    ConditionalOnCargoType("Liquid Bulk", Number("liquidCarriageTemp", "Required Carriage Temperature (°C)", 10, width: FormFieldWidth.Third)),
+                    ConditionalOnCargoType("Liquid Bulk", Number("liquidCarriageTemp", "Required Carriage Temperature (°C)", 10, width: FormFieldWidth.Third, validation: AllowNegative)),
                     ConditionalOnCargoType("Liquid Bulk", File("liquidSdsFile", "SDS", 11))),
 
                 Section("gas-cargo", "Gas Cargo", 9,
@@ -155,7 +155,7 @@ public static class FormSeedData
                     ConditionalOnCargoType("Gas", Select("gasQuantityUnit", "Quantity Unit", 3, width: FormFieldWidth.Third,
                         options: new[] { ("MT", "MT"), ("m³", "m³") })),
                     ConditionalOnCargoType("Gas", Number("gasDensity", "Density (kg/m³)", 4, required: true, width: FormFieldWidth.Third)),
-                    ConditionalOnCargoType("Gas", Number("gasLoadingTemp", "Loading Temperature (°C)", 5, required: true, width: FormFieldWidth.Third)),
+                    ConditionalOnCargoType("Gas", Number("gasLoadingTemp", "Loading Temperature (°C)", 5, required: true, width: FormFieldWidth.Third, validation: AllowNegative)),
                     ConditionalOnCargoType("Gas", Number("gasLoadingPressure", "Loading Pressure (bar)", 6, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Gas", Number("gasLoadingRate", "Loading Rate (m³/h)", 7, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Gas", Number("gasDischargeRate", "Discharge Rate (m³/h)", 8, required: true, width: FormFieldWidth.Third)),
@@ -168,9 +168,9 @@ public static class FormSeedData
                     ConditionalOnCargoType("Refrigerated & Perishable Cargo", Number("reeferQuantity", "Quantity (MT)", 2, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Refrigerated & Perishable Cargo", Select("reeferPackingType", "Packing Type", 3, required: true, width: FormFieldWidth.Third,
                         options: new[] { ("Cartons", "Cartons"), ("Pallets", "Pallets"), ("Bags", "Bags"), ("Bulk", "Bulk"), ("Other", "Other") })),
-                    ConditionalOnCargoType("Refrigerated & Perishable Cargo", Number("reeferSetTemp", "Required Set Temperature (°C)", 4, required: true, width: FormFieldWidth.Third)),
-                    ConditionalOnCargoType("Refrigerated & Perishable Cargo", Number("reeferMinTemp", "Minimum Temperature (°C)", 5, required: true, width: FormFieldWidth.Third)),
-                    ConditionalOnCargoType("Refrigerated & Perishable Cargo", Number("reeferMaxTemp", "Maximum Temperature (°C)", 6, required: true, width: FormFieldWidth.Third)),
+                    ConditionalOnCargoType("Refrigerated & Perishable Cargo", Number("reeferSetTemp", "Required Set Temperature (°C)", 4, required: true, width: FormFieldWidth.Third, validation: AllowNegative)),
+                    ConditionalOnCargoType("Refrigerated & Perishable Cargo", Number("reeferMinTemp", "Minimum Temperature (°C)", 5, required: true, width: FormFieldWidth.Third, validation: AllowNegative)),
+                    ConditionalOnCargoType("Refrigerated & Perishable Cargo", Number("reeferMaxTemp", "Maximum Temperature (°C)", 6, required: true, width: FormFieldWidth.Third, validation: AllowNegative)),
                     ConditionalOnCargoType("Refrigerated & Perishable Cargo", Number("reeferVentilation", "Ventilation (m³/h)", 7, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Refrigerated & Perishable Cargo", Number("reeferHumidity", "Relative Humidity (% RH)", 8, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Refrigerated & Perishable Cargo", Select("reeferControlledAtmosphere", "Controlled Atmosphere", 9, options: YesNoOptions, width: FormFieldWidth.Third)),
@@ -246,7 +246,7 @@ public static class FormSeedData
                     ConditionalOnIn("vesselType", GasCarrierTypes, Number("gasCargoCapacity", "Cargo Capacity (m³)", 0, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnIn("vesselType", GasCarrierTypes, Text("gasCargoTypeField", "Cargo Type", 1, width: FormFieldWidth.Third)),
                     ConditionalOnIn("vesselType", GasCarrierTypes, Text("gasTankType", "Tank Type", 2, width: FormFieldWidth.Third)),
-                    ConditionalOnIn("vesselType", GasCarrierTypes, Number("gasMinCargoTemp", "Minimum Cargo Temperature (°C)", 3, width: FormFieldWidth.Third)),
+                    ConditionalOnIn("vesselType", GasCarrierTypes, Number("gasMinCargoTemp", "Minimum Cargo Temperature (°C)", 3, width: FormFieldWidth.Third, validation: AllowNegative)),
                     ConditionalOnIn("vesselType", GasCarrierTypes, Number("gasMaxWorkingPressure", "Max Working Pressure (bar)", 4, width: FormFieldWidth.Third))),
 
                 Section("general-particulars", "General Particulars", 7,
@@ -255,8 +255,9 @@ public static class FormSeedData
                         validation: new FormFieldValidationDto { Pattern = "^\\d{4}$" }),
                     Select("flag", "Flag", 2, required: true, width: FormFieldWidth.Third, options: CountryOptions),
                     Port("currentOpenPort", "Current / Open Port", 3, required: true, systemKey: FormsConstants.SystemFieldKeys.DeparturePort, width: FormFieldWidth.Half),
-                    Date("openDateFrom", "Open Date From", 4, required: true, systemKey: FormsConstants.SystemFieldKeys.DepartureTime, width: FormFieldWidth.Third),
-                    Date("openDateTo", "Open Date To", 5, width: FormFieldWidth.Third),
+                    Date("openDateFrom", "Open Date From", 4, required: true, systemKey: FormsConstants.SystemFieldKeys.DepartureTime, width: FormFieldWidth.Third,
+                        validation: NoPastDates),
+                    Date("openDateTo", "Open Date To", 5, width: FormFieldWidth.Third, validation: NoPastDates),
                     Number("draft", "Draft (m)", 6, width: FormFieldWidth.Third),
                     Number("loa", "LOA (m)", 7, width: FormFieldWidth.Third),
                     Number("beam", "Beam (m)", 8, width: FormFieldWidth.Third),
@@ -287,13 +288,13 @@ public static class FormSeedData
                     Select("availabilityType", "Availability Type", 0, required: true, width: FormFieldWidth.Third,
                         options: new[] { ("Open Vessel", "Open Vessel"), ("Scheduled Route", "Scheduled Route") }),
                     ConditionalOn("availabilityType", "Open Vessel", Port("openPort", "Open Port", 1, required: true, width: FormFieldWidth.Half)),
-                    ConditionalOn("availabilityType", "Open Vessel", Date("openDate", "Open Date", 2, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half)),
+                    ConditionalOn("availabilityType", "Open Vessel", Date("openDate", "Open Date", 2, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half, validation: NoPastDates)),
                     ConditionalOn("availabilityType", "Open Vessel", Port("preferredTradingArea", "Preferred Trading Area", 3, width: FormFieldWidth.Half)),
                     ConditionalOn("availabilityType", "Open Vessel", Port("preferredDestinationArea", "Preferred Destination Area", 4, width: FormFieldWidth.Half)),
                     ConditionalOn("availabilityType", "Scheduled Route", Port("schedDeparturePort", "Departure Port", 5, required: true, width: FormFieldWidth.Half)),
-                    ConditionalOn("availabilityType", "Scheduled Route", Date("schedDepartureDate", "Departure Date", 6, required: true, width: FormFieldWidth.Half)),
+                    ConditionalOn("availabilityType", "Scheduled Route", Date("schedDepartureDate", "Departure Date", 6, required: true, width: FormFieldWidth.Half, validation: NoPastDates)),
                     ConditionalOn("availabilityType", "Scheduled Route", Port("schedDestinationPort", "Destination Port", 7, required: true, width: FormFieldWidth.Half)),
-                    ConditionalOn("availabilityType", "Scheduled Route", Field("schedEta", "ETA", FormFieldType.DateTime, 8, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half)),
+                    ConditionalOn("availabilityType", "Scheduled Route", Field("schedEta", "ETA", FormFieldType.DateTime, 8, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half, validation: NoPastDates)),
                     ConditionalOn("availabilityType", "Scheduled Route", Text("transitPorts", "Transit Ports", 9))),
 
                 Section("additional-information", "Additional Information", 10,
@@ -319,8 +320,8 @@ public static class FormSeedData
                     Port("portOfClearance", "Port / Customs Office", 2, required: true, width: FormFieldWidth.Half),
                     Select("countryOfOrigin", "Country of Origin", 3, required: true, width: FormFieldWidth.Half, options: CountryOptions),
                     Select("countryOfExport", "Country of Export", 4, required: true, width: FormFieldWidth.Half, options: CountryOptions),
-                    Date("arrivalDate", "Expected Arrival / Departure Date", 5, required: true, systemKey: FormsConstants.SystemFieldKeys.DepartureTime, width: FormFieldWidth.Half),
-                    Date("clearanceCompletionDate", "Expected Clearance Completion Date", 6, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half)),
+                    Date("arrivalDate", "Expected Arrival / Departure Date", 5, required: true, systemKey: FormsConstants.SystemFieldKeys.DepartureTime, width: FormFieldWidth.Half, validation: NoPastDates),
+                    Date("clearanceCompletionDate", "Expected Clearance Completion Date", 6, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half, validation: NoPastDates)),
 
                 Section("cargo-details", "Cargo Details", 1,
                     Select("cargoType", "Cargo Type", 0, required: true, systemKey: FormsConstants.SystemFieldKeys.CargoType, width: FormFieldWidth.Half,
@@ -328,7 +329,7 @@ public static class FormSeedData
                     ConditionalOn("cargoType", "Other", Text("cargoTypeOther", "Describe Cargo Type", 1, required: true, width: FormFieldWidth.Half)),
                     Text("goodsDescription", "Commodity / Goods Description", 2, required: true),
                     Text("hsCode", "HS Code (6–10 digits)", 3, width: FormFieldWidth.Third,
-                        validation: new FormFieldValidationDto { Pattern = "^\\d{6,10}$" }),
+                        validation: new FormFieldValidationDto { Pattern = "^\\d{6,10}$", MaxLength = 10, DigitsOnly = true }),
                     Number("quantity", "Quantity (pcs / packages / units)", 4, required: true, width: FormFieldWidth.Third),
                     Select("packagingType", "Packaging Type", 5, required: true, width: FormFieldWidth.Third,
                         options: new[] { ("Cartons", "Cartons"), ("Pallets", "Pallets"), ("Crates", "Crates"), ("Bags", "Bags"), ("Bulk", "Bulk"), ("Drums", "Drums"), ("IBCs", "IBCs"), ("Containers", "Containers"), ("Breakbulk", "Breakbulk"), ("Other", "Other") }),
@@ -531,8 +532,12 @@ public static class FormSeedData
     private static FormFieldDto Number(string key, string label, int order, bool required = false, string? systemKey = null, string width = "Full", FormFieldValidationDto? validation = null) =>
         Field(key, label, FormFieldType.Number, order, required, systemKey, width, validation: validation);
 
-    private static FormFieldDto Date(string key, string label, int order, bool required = false, string? systemKey = null, string width = "Full") =>
-        Field(key, label, FormFieldType.Date, order, required, systemKey, width);
+    private static FormFieldDto Date(string key, string label, int order, bool required = false, string? systemKey = null, string width = "Full", FormFieldValidationDto? validation = null) =>
+        Field(key, label, FormFieldType.Date, order, required, systemKey, width, validation: validation);
+
+    private static FormFieldValidationDto NoPastDates => new() { NoPastDates = true };
+
+    private static FormFieldValidationDto AllowNegative => new() { AllowNegative = true };
 
     private static FormFieldDto Select(string key, string label, int order, bool required = false, string? systemKey = null, string width = "Full", (string Value, string Label)[]? options = null) =>
         Field(key, label, FormFieldType.Select, order, required, systemKey, width, options: options);

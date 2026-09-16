@@ -224,9 +224,14 @@ public class FormSubmissionService : IFormSubmissionService
                 break;
 
             case var t when t == FormFieldType.Date || t == FormFieldType.DateTime || t == FormFieldType.Time:
-                if (!DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+                if (!DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDate))
                 {
                     throw new FormsException($"'{field.Label}' has an invalid date/time.", StatusCodes.Status400BadRequest);
+                }
+
+                if (v?.NoPastDates == true && t != FormFieldType.Time && parsedDate.Date < DateTime.UtcNow.Date)
+                {
+                    throw new FormsException($"'{field.Label}' cannot be a date in the past.", StatusCodes.Status400BadRequest);
                 }
 
                 break;

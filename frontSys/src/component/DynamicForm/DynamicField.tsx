@@ -19,8 +19,6 @@ const WIDTH_CLASS: Record<FormField['width'], string> = {
 
 const HTML_INPUT_TYPE: Partial<Record<FormField['type'], string>> = {
   Text: 'text',
-  Number: 'number',
-  Decimal: 'number',
   Date: 'date',
   DateTime: 'datetime-local',
   Time: 'time',
@@ -32,6 +30,31 @@ const portOptions = Object.values(ports).map((port) => ({
   text: `${port.name} - ${port.country}`,
   value: `${port.name} - ${port.country}`,
 }));
+
+/** Strips letters, '+', and scientific notation while keeping one leading '-' and one '.' -
+ * blocks junk keystrokes without breaking legitimate negative (e.g. sub-zero temperatures)
+ * or decimal (e.g. draft in metres) values. A leading '-' is kept only when `allowNegative` is
+ * set - most numeric fields (weights, counts, capacities) can never legitimately be negative;
+ * it's only turned on for fields that can be (e.g. sub-zero temperatures). */
+function sanitizeNumeric(raw: string, allowNegative: boolean): string {
+  let cleaned = raw.replace(/[^0-9.-]/g, '');
+  const negative = allowNegative && cleaned.startsWith('-');
+  cleaned = cleaned.replace(/-/g, '');
+  const dot = cleaned.indexOf('.');
+  if (dot !== -1) {
+    cleaned = cleaned.slice(0, dot + 1) + cleaned.slice(dot + 1).replace(/\./g, '');
+  }
+  return (negative ? '-' : '') + cleaned;
+}
+
+function todayMin(type: FormField['type']): string | undefined {
+  if (type !== 'Date' && type !== 'DateTime') return undefined;
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return type === 'Date' ? `${y}-${m}-${d}` : `${y}-${m}-${d}T00:00`;
+}
 
 const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChange }) => {
   const inputId = `df-${field.key}`;
@@ -79,6 +102,21 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
             </option>
           ))}
         </select>
+      );
+      break;
+
+    case 'Number':
+    case 'Decimal':
+      control = (
+        <input
+          id={inputId}
+          type="text"
+          inputMode="decimal"
+          className={`form-control${invalidClass}`}
+          placeholder={field.placeholder ?? undefined}
+          value={(value as string) ?? ''}
+          onChange={(e) => onChange(sanitizeNumeric(e.target.value, field.validation?.allowNegative ?? false))}
+        />
       );
       break;
 
@@ -158,9 +196,6 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
             checked={Boolean(value)}
             onChange={(e) => onChange(e.target.checked)}
           />
-          <label className="form-check-label" htmlFor={inputId}>
-            {field.placeholder ?? 'Yes'}
-          </label>
         </div>
       );
       break;
@@ -206,6 +241,7 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
     default: {
       const digitsOnly = field.validation?.digitsOnly ?? false;
       const maxLength = field.validation?.maxLength ?? undefined;
+      const min = field.validation?.noPastDates ? todayMin(field.type) : undefined;
       control = (
         <input
           id={inputId}
@@ -214,6 +250,7 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
           placeholder={field.placeholder ?? undefined}
           inputMode={digitsOnly ? 'numeric' : undefined}
           maxLength={digitsOnly ? undefined : maxLength}
+          min={min}
           value={(value as string) ?? ''}
           onChange={(e) => {
             let next = e.target.value;
