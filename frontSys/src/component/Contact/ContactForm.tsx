@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import FormInput from '../Common/FormInput';
+import PhoneInput from '../Common/PhoneInput';
 import { quoteApi } from '../../api';
 import { formatApiError } from '../../utils/formatApiError';
 import { useAlert } from '../../context/AlertContext';
@@ -22,6 +23,7 @@ const ContactForm: React.FC = () => {
     const formData = new FormData(form);
     const name = String(formData.get('name') ?? '').trim();
     const email = String(formData.get('email') ?? '').trim();
+    const phone = String(formData.get('phone') ?? '').trim();
     const subject = String(formData.get('subject') ?? '').trim();
     const message = String(formData.get('message') ?? '').trim();
 
@@ -44,7 +46,7 @@ const ContactForm: React.FC = () => {
         fname,
         lname,
         email,
-        phoneNumber: 'N/A',
+        phoneNumber: phone || 'N/A',
       });
 
       success(response.message || 'Message sent successfully.');
@@ -64,6 +66,11 @@ const ContactForm: React.FC = () => {
         </div>
         <div className="col-lg-12">
           <FormInput tag="input" type="email" name="email" classes="form-control" placeholder="Email" />
+        </div>
+        <div className="col-lg-12">
+          <div className="form-group">
+            <PhoneInput name="phone" placeholder="Phone Number" />
+          </div>
         </div>
         <div className="col-lg-12">
           <FormInput tag="input" type="text" name="subject" classes="form-control" placeholder="Subject" />

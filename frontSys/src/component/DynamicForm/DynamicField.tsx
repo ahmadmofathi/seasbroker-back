@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { FormField } from '../../api/types';
 import type { FieldValue } from './conditionEngine';
 import FormSelect from '../Common/FormSelect';
+import PhoneInput from '../Common/PhoneInput';
 import ports from '../../utils/ports.json';
 
 interface DynamicFieldProps {
@@ -23,7 +24,6 @@ const HTML_INPUT_TYPE: Partial<Record<FormField['type'], string>> = {
   DateTime: 'datetime-local',
   Time: 'time',
   Email: 'email',
-  Phone: 'tel',
 };
 
 const portOptions = Object.values(ports).map((port) => ({
@@ -116,6 +116,19 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
           placeholder={field.placeholder ?? undefined}
           value={(value as string) ?? ''}
           onChange={(e) => onChange(sanitizeNumeric(e.target.value, field.validation?.allowNegative ?? false))}
+        />
+      );
+      break;
+
+    case 'Phone':
+      control = (
+        <PhoneInput
+          id={inputId}
+          defaultValue={(value as string) ?? ''}
+          onChange={onChange}
+          placeholder={field.placeholder ?? undefined}
+          required={field.required}
+          invalidClass={invalidClass}
         />
       );
       break;
