@@ -79,11 +79,15 @@ export function validateField(field: FormField, value: FieldValue): string | nul
 
   // by this point value is one of the plain text/date field types, always a string at runtime
   const str = value as string;
-  if (v?.minLength != null && str.length < v.minLength) {
-    return `${field.label} must be at least ${v.minLength} characters.`;
-  }
-  if (v?.maxLength != null && str.length > v.maxLength) {
-    return `${field.label} must be at most ${v.maxLength} characters.`;
+  // When fixedPrefix is set, min/maxLength describe the part typed after the prefix (used for the
+  // live character cap), not the full saved string, so pattern is the source of truth instead.
+  if (!v?.fixedPrefix) {
+    if (v?.minLength != null && str.length < v.minLength) {
+      return `${field.label} must be at least ${v.minLength} characters.`;
+    }
+    if (v?.maxLength != null && str.length > v.maxLength) {
+      return `${field.label} must be at most ${v.maxLength} characters.`;
+    }
   }
   if (v?.pattern) {
     try {

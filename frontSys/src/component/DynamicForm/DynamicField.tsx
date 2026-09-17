@@ -256,27 +256,46 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
       const maxLength = field.validation?.maxLength ?? undefined;
       const min = field.validation?.noPastDates ? todayMin(field.type) : undefined;
       const noFutureYear = field.validation?.noFutureYear ?? false;
-      control = (
+      const fixedPrefix = field.validation?.fixedPrefix ?? undefined;
+
+      const rawValue = (value as string) ?? '';
+      const displayValue = fixedPrefix
+        ? rawValue.replace(new RegExp(`^${fixedPrefix}\\s*`), '')
+        : rawValue;
+
+      const handleChange = (raw: string) => {
+        let next = raw;
+        if (digitsOnly) next = next.replace(/\D/g, '');
+        if (maxLength != null) next = next.slice(0, maxLength);
+        if (noFutureYear && next.length === 4) {
+          const currentYear = new Date().getFullYear();
+          if (Number(next) > currentYear) next = String(currentYear);
+        }
+        onChange(fixedPrefix ? (next ? `${fixedPrefix} ${next}` : '') : next);
+      };
+
+      const input = (
         <input
           id={inputId}
           type={HTML_INPUT_TYPE[field.type] ?? 'text'}
-          className={`form-control${invalidClass}`}
+          className={fixedPrefix ? 'flex-fill border-0 bg-transparent p-0' : `form-control${invalidClass}`}
+          style={fixedPrefix ? { outline: 'none' } : undefined}
           placeholder={field.placeholder ?? undefined}
           inputMode={digitsOnly ? 'numeric' : undefined}
           maxLength={digitsOnly ? undefined : maxLength}
           min={min}
-          value={(value as string) ?? ''}
-          onChange={(e) => {
-            let next = e.target.value;
-            if (digitsOnly) next = next.replace(/\D/g, '');
-            if (maxLength != null) next = next.slice(0, maxLength);
-            if (noFutureYear && next.length === 4) {
-              const currentYear = new Date().getFullYear();
-              if (Number(next) > currentYear) next = String(currentYear);
-            }
-            onChange(next);
-          }}
+          value={displayValue}
+          onChange={(e) => handleChange(e.target.value)}
         />
+      );
+
+      control = fixedPrefix ? (
+        <div className={`form-control d-flex align-items-center gap-2${invalidClass}`}>
+          <span className="fw-bold">{fixedPrefix}</span>
+          {input}
+        </div>
+      ) : (
+        input
       );
       break;
     }

@@ -157,6 +157,13 @@ public class FormFieldValidationDto
     [JsonPropertyName("noFutureYear")]
     public bool? NoFutureYear { get; set; }
 
+    /// <summary>Text only: a non-editable prefix shown before the input and prepended to the saved
+    /// value (e.g. "UN" -> "UN 1234"). When set, MaxLength/DigitsOnly describe the part typed after
+    /// the prefix, not the full saved string - Pattern (matching the full string) is the source of
+    /// truth for backend validation instead.</summary>
+    [JsonPropertyName("fixedPrefix")]
+    public string? FixedPrefix { get; set; }
+
     [JsonPropertyName("fileMaxSizeMB")]
     public double? FileMaxSizeMB { get; set; }
 

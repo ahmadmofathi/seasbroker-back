@@ -46,7 +46,8 @@ public static class FormSeedData
                     File("documentsFile", "Documents / Photos", 6)),
 
                 Section("dangerous-goods", "Dangerous Goods Details", 2,
-                    ConditionalOn("dangerousGoods", "Yes", Text("unNumber", "UN Number", 0, required: true, width: FormFieldWidth.Third, placeholder: "UN ####")),
+                    ConditionalOn("dangerousGoods", "Yes", Text("unNumber", "UN Number", 0, required: true, width: FormFieldWidth.Third, placeholder: "1234",
+                        validation: new FormFieldValidationDto { Pattern = "^UN \\d{4}$", MaxLength = 4, DigitsOnly = true, FixedPrefix = "UN" })),
                     ConditionalOn("dangerousGoods", "Yes", Text("properShippingName", "Proper Shipping Name", 1, required: true, width: FormFieldWidth.Third)),
                     ConditionalOn("dangerousGoods", "Yes", Text("imoClass", "IMO/IMDG Class", 2, required: true, width: FormFieldWidth.Third)),
                     ConditionalOn("dangerousGoods", "Yes", Select("packingGroup", "Packing Group", 3, required: true, width: FormFieldWidth.Third,

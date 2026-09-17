@@ -262,14 +262,20 @@ public class FormSubmissionService : IFormSubmissionService
                 break;
 
             default:
-                if (v?.MinLength is not null && value!.Length < v.MinLength)
+                // When FixedPrefix is set, MinLength/MaxLength describe the part typed after the
+                // prefix (for the frontend's live character cap) rather than the full saved string,
+                // so Pattern - matching the full string - is the source of truth here instead.
+                if (string.IsNullOrEmpty(v?.FixedPrefix))
                 {
-                    throw new FormsException($"'{field.Label}' must be at least {v.MinLength} characters.", StatusCodes.Status400BadRequest);
-                }
+                    if (v?.MinLength is not null && value!.Length < v.MinLength)
+                    {
+                        throw new FormsException($"'{field.Label}' must be at least {v.MinLength} characters.", StatusCodes.Status400BadRequest);
+                    }
 
-                if (v?.MaxLength is not null && value!.Length > v.MaxLength)
-                {
-                    throw new FormsException($"'{field.Label}' must be at most {v.MaxLength} characters.", StatusCodes.Status400BadRequest);
+                    if (v?.MaxLength is not null && value!.Length > v.MaxLength)
+                    {
+                        throw new FormsException($"'{field.Label}' must be at most {v.MaxLength} characters.", StatusCodes.Status400BadRequest);
+                    }
                 }
 
                 if (!string.IsNullOrEmpty(v?.Pattern) && !System.Text.RegularExpressions.Regex.IsMatch(value!, v.Pattern))
