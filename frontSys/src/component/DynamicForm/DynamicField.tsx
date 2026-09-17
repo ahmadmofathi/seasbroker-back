@@ -242,6 +242,7 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
       const digitsOnly = field.validation?.digitsOnly ?? false;
       const maxLength = field.validation?.maxLength ?? undefined;
       const min = field.validation?.noPastDates ? todayMin(field.type) : undefined;
+      const noFutureYear = field.validation?.noFutureYear ?? false;
       control = (
         <input
           id={inputId}
@@ -256,6 +257,10 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
             let next = e.target.value;
             if (digitsOnly) next = next.replace(/\D/g, '');
             if (maxLength != null) next = next.slice(0, maxLength);
+            if (noFutureYear && next.length === 4) {
+              const currentYear = new Date().getFullYear();
+              if (Number(next) > currentYear) next = String(currentYear);
+            }
             onChange(next);
           }}
         />

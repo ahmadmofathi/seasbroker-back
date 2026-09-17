@@ -94,6 +94,13 @@ export function validateField(field: FormField, value: FieldValue): string | nul
       // malformed pattern - skip client-side check, backend still enforces it safely
     }
   }
+  if (v?.noFutureYear) {
+    const year = Number(str);
+    const currentYear = new Date().getFullYear();
+    if (!Number.isNaN(year) && year > currentYear) {
+      return `${field.label} cannot be later than ${currentYear}.`;
+    }
+  }
 
   return null;
 }

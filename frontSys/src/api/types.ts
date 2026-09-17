@@ -282,6 +282,7 @@ export interface FormFieldValidation {
   digitsOnly?: boolean | null;
   noPastDates?: boolean | null;
   allowNegative?: boolean | null;
+  noFutureYear?: boolean | null;
   fileMaxSizeMB?: number | null;
   allowedExtensions?: string[] | null;
   minSelections?: number | null;

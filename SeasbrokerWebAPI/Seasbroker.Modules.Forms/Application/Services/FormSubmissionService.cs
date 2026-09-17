@@ -277,6 +277,11 @@ public class FormSubmissionService : IFormSubmissionService
                     throw new FormsException($"'{field.Label}' is not in a valid format.", StatusCodes.Status400BadRequest);
                 }
 
+                if (v?.NoFutureYear == true && int.TryParse(value, out var year) && year > DateTime.UtcNow.Year)
+                {
+                    throw new FormsException($"'{field.Label}' cannot be later than {DateTime.UtcNow.Year}.", StatusCodes.Status400BadRequest);
+                }
+
                 break;
         }
     }

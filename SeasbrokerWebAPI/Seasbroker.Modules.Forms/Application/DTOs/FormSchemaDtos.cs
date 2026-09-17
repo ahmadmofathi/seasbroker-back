@@ -153,6 +153,10 @@ public class FormFieldValidationDto
     [JsonPropertyName("allowNegative")]
     public bool? AllowNegative { get; set; }
 
+    /// <summary>A 4-digit year field: rejects a year later than the current year.</summary>
+    [JsonPropertyName("noFutureYear")]
+    public bool? NoFutureYear { get; set; }
+
     [JsonPropertyName("fileMaxSizeMB")]
     public double? FileMaxSizeMB { get; set; }
 
