@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { listCollection, updateRecord } from '../../api/client';
+import { adminList, adminUpdate } from '../../api/adminClient';
 import { useAlert } from '../../context/AlertContext';
 import { formatApiError } from '../../utils/formatApiError';
 
@@ -29,9 +29,8 @@ const AdminSettings: React.FC = () => {
 
   const loadSettings = () => {
     setLoading(true);
-    listCollection<SettingRecord>('settings', { page: 1, perPage: 100 })
-      .then((res) => {
-        const items = res.items || [];
+    adminList<SettingRecord>('settings', { page: 1, perPage: 100 })
+      .then((items) => {
         setSettings(items);
         
         // Map fetched settings to form states
@@ -79,7 +78,7 @@ const AdminSettings: React.FC = () => {
         if (matched) {
           // Only update if value changed to save requests
           if (matched.value !== update.value) {
-            await updateRecord('settings', matched.id, { value: update.value });
+            await adminUpdate('settings', matched.id, { value: update.value });
           }
         }
       }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { listCollection, createRecord, updateRecord, deleteRecord } from '../../api/client';
+import { adminList, adminCreate, adminUpdate, adminDelete } from '../../api/adminClient';
 import { useAlert } from '../../context/AlertContext';
 import { formatApiError } from '../../utils/formatApiError';
 
@@ -26,9 +26,9 @@ const AdminFaqs: React.FC = () => {
 
   const load = () => {
     setLoading(true);
-    listCollection<FaqRecord>('faqs', { page: 1, perPage: 100 })
-      .then((res) => {
-        setFaqs(res.items || []);
+    adminList<FaqRecord>('faqs', { page: 1, perPage: 100 })
+      .then((items) => {
+        setFaqs(items);
       })
       .catch((e: unknown) => showError(formatApiError(e)))
       .finally(() => setLoading(false));
@@ -62,10 +62,10 @@ const AdminFaqs: React.FC = () => {
       const payload = { heading, para, sortOrder: Number(sortOrder) };
 
       if (editingFaq) {
-        await updateRecord('faqs', editingFaq.id, payload);
+        await adminUpdate('faqs', editingFaq.id, payload);
         success('FAQ updated successfully.');
       } else {
-        await createRecord('faqs', payload);
+        await adminCreate('faqs', payload);
         success('FAQ created successfully.');
       }
 
@@ -82,7 +82,7 @@ const AdminFaqs: React.FC = () => {
     if (!window.confirm(`Are you sure you want to delete "${faq.heading}"?`)) return;
 
     try {
-      await deleteRecord('faqs', faq.id);
+      await adminDelete('faqs', faq.id);
       success('FAQ deleted successfully.');
       load();
     } catch (err: unknown) {
