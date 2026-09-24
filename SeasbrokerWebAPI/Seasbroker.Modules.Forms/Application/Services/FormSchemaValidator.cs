@@ -52,6 +52,7 @@ public static class FormSchemaValidator
         foreach (var field in allFields.Values)
         {
             ValidateConditions(field, allFields);
+            ValidateAfterField(field, allFields);
         }
 
         DetectCircularDependencies(allFields);
@@ -132,6 +133,26 @@ public static class FormSchemaValidator
             {
                 Fail($"Field '{field.Key}' has a condition referencing unknown field '{condition.SourceFieldKey}'.");
             }
+        }
+    }
+
+    private static void ValidateAfterField(FormFieldDto field, Dictionary<string, FormFieldDto> allFields)
+    {
+        var afterKey = field.Validation?.AfterField;
+        if (string.IsNullOrWhiteSpace(afterKey))
+        {
+            return;
+        }
+
+        if (string.Equals(afterKey, field.Key, StringComparison.OrdinalIgnoreCase))
+        {
+            Fail($"Field '{field.Key}' can't be required to come after itself.");
+        }
+
+        if (!allFields.TryGetValue(afterKey, out var other) ||
+            !(other.Type == FormFieldType.Date || other.Type == FormFieldType.DateTime))
+        {
+            Fail($"Field '{field.Key}' must come after '{afterKey}', which isn't a date field on this form.");
         }
     }
 

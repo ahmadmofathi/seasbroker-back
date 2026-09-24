@@ -1,3 +1,5 @@
+using Seasbroker.Modules.Vessel.Application.DTOs;
+
 namespace Seasbroker.Modules.Vessel.Application.Commands;
 
 public sealed record UpdateVesselAvailabilityCommand(
@@ -6,4 +8,5 @@ public sealed record UpdateVesselAvailabilityCommand(
     DateTime? AvailableTo,
     string? OpenPort,
     string? DestinationPort,
-    bool? IsActive);
+    bool? IsActive,
+    IReadOnlyList<RouteStopDto>? RouteStops = null);

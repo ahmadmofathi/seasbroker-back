@@ -48,6 +48,13 @@ public class PromoteQuoteToCargoCommandHandler : ICommandHandler<PromoteQuoteToC
             throw new CargoException("The requested quote wasn't found.", StatusCodes.Status404NotFound);
         }
 
+        if (!await CargoDomainHelper.IsCargoRequestAsync(_dbContext, quote, cancellationToken))
+        {
+            throw new CargoException(
+                "Only Cargo Brokerage requests can be promoted to a cargo listing.",
+                StatusCodes.Status400BadRequest);
+        }
+
         var departureTime = QuoteDateParser.ParseOrThrow(quote.DepartureTime, "departureTime");
         var arrivalTime = QuoteDateParser.ParseOrThrow(quote.ArrivalTime, "arrivalTime");
         CargoDomainHelper.ValidateDateRange(departureTime, arrivalTime);

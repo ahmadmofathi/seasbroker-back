@@ -12,6 +12,8 @@ public static class VesselConstants
 
     public const int MaxAvailabilityWindowDays = 365;
 
+    public const int MaxRouteStops = 20;
+
     public static readonly IReadOnlyList<string> AllowedVesselTypes =
     [
         "Bulk",

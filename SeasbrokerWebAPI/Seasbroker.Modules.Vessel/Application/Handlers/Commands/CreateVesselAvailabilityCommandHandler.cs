@@ -61,13 +61,18 @@ public class CreateVesselAvailabilityCommandHandler
             throw new VesselException(ex.Message, StatusCodes.Status409Conflict);
         }
 
+        var route = command.RouteStops is { Count: > 0 }
+            ? VesselDomainHelper.BuildRoute(command.RouteStops, command.AvailableFrom, command.AvailableTo)
+            : new List<RouteStop>();
+
         var availability = new VesselAvailability
         {
             VesselId = vesselId,
             AvailableFrom = command.AvailableFrom,
             AvailableTo = command.AvailableTo,
-            OpenPort = command.OpenPort.Trim(),
-            DestinationPort = command.DestinationPort?.Trim(),
+            OpenPort = route.Count > 0 ? route[0].Port : command.OpenPort.Trim(),
+            DestinationPort = route.Count > 1 ? route[^1].Port : command.DestinationPort?.Trim(),
+            RouteStops = route,
             IsActive = true,
         };
 

@@ -50,6 +50,15 @@ public class UpdateVesselAvailabilityCommandHandler
             VesselDomainHelper.ValidateAvailabilityDateRange(from, to);
         }
 
+        // A new route replaces the old one; otherwise the existing route is re-checked so that
+        // moving the window can't leave port ETAs outside it.
+        var route = command.RouteStops is not null
+            ? VesselDomainHelper.BuildRoute(command.RouteStops, from, to)
+            : VesselDomainHelper.BuildRoute(
+                (availability.RouteStops ?? new()).Select(s => new RouteStopDto { Port = s.Port, Eta = s.Eta }).ToList(),
+                from,
+                to);
+
         if (willBeActive)
         {
             var activeWindows = await VesselDomainHelper.GetActiveAvailabilityWindowsAsync(
@@ -94,6 +103,16 @@ public class UpdateVesselAvailabilityCommandHandler
         if (command.IsActive.HasValue)
         {
             availability.IsActive = command.IsActive.Value;
+        }
+
+        if (command.RouteStops is not null)
+        {
+            availability.RouteStops = route;
+            if (route.Count > 0)
+            {
+                availability.OpenPort = route[0].Port;
+                availability.DestinationPort = route.Count > 1 ? route[^1].Port : availability.DestinationPort;
+            }
         }
 
         await _dbContext.SaveChangesAsync(cancellationToken);

@@ -30,6 +30,8 @@ export interface RequestedQuoteRecord {
   customer?: string;
   status?: string;
   isPromoted?: boolean;
+  /** False for Ship, Clearance and Contact requests - only cargo requests can become cargo listings. */
+  canPromote?: boolean;
   cargoListingId?: string;
 }
 

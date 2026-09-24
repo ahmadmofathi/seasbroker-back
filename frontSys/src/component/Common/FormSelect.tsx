@@ -21,7 +21,7 @@ const FormSelect = <T extends object>({
   formData,
   setFormData
 }: FormSelectProps<T>): JSX.Element => {
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>(() => String(formData[formField] ?? ""));
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
   const dropdownRef = useRef<HTMLDivElement>(null);

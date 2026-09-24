@@ -22,7 +22,8 @@ public class CreateVesselAvailabilityCommandValidator : AbstractValidator<Create
         RuleFor(x => x.OpenPort)
             .NotEmpty()
             .MinimumLength(2)
-            .MaximumLength(200);
+            .MaximumLength(200)
+            .When(x => x.RouteStops is not { Count: > 0 });
 
         RuleFor(x => x.DestinationPort)
             .MaximumLength(200)

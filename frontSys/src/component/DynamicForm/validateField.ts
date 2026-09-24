@@ -1,4 +1,5 @@
-import type { FormField } from '../../api/types';
+import type { FormField, RouteStopValue } from '../../api/types';
+import { validateRoute } from '../../utils/route';
 import type { FieldValue } from './conditionEngine';
 
 const FILE_TYPES = new Set(['File', 'MultiFile']);
@@ -6,7 +7,11 @@ const OPTION_TYPES = new Set(['Select', 'Radio']);
 
 /** Client-side mirror of the backend's field validation, for immediate UX feedback. The backend
  * re-validates independently and is the source of truth - this never needs to be exhaustive. */
-export function validateField(field: FormField, value: FieldValue): string | null {
+export function validateField(
+  field: FormField,
+  value: FieldValue,
+  otherFields?: { field: FormField; value: FieldValue }[],
+): string | null {
   const isFile = FILE_TYPES.has(field.type);
   const files = isFile ? (Array.isArray(value) ? (value as File[]) : value instanceof File ? [value] : []) : [];
   const isEmpty = isFile
@@ -42,6 +47,14 @@ export function validateField(field: FormField, value: FieldValue): string | nul
     return null;
   }
 
+  if (field.type === 'Route') {
+    const message = validateRoute(value as RouteStopValue[], {
+      minStops: v?.minSelections,
+      noPastDates: v?.noPastDates,
+    });
+    return message ? `${field.label}: ${message}` : null;
+  }
+
   if (field.type === 'Number' || field.type === 'Decimal') {
     const n = Number(value);
     if (Number.isNaN(n)) return `${field.label} must be a number.`;
@@ -57,6 +70,14 @@ export function validateField(field: FormField, value: FieldValue): string | nul
       today.setHours(0, 0, 0, 0);
       if (!Number.isNaN(parsed.getTime()) && parsed < today) {
         return `${field.label} cannot be a date in the past.`;
+      }
+    }
+    if (v?.afterField) {
+      const other = otherFields?.find((o) => o.field.key === v.afterField);
+      const otherValue = typeof other?.value === 'string' ? other.value : '';
+      // plain string compare is safe: both are ISO date / datetime-local values from the same input type family
+      if (other && otherValue && (value as string) <= otherValue) {
+        return `${field.label} must be after ${other.field.label}.`;
       }
     }
     return null;

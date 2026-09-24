@@ -108,6 +108,10 @@ const AdminQuotes: React.FC = () => {
                             <span className="admin-badge" title={q.cargoListingId ? `Cargo listing ${q.cargoListingId}` : undefined}>
                               <i className="ri-checkbox-circle-line" /> Promoted
                             </span>
+                          ) : !q.canPromote ? (
+                            <span className="admin-result-text" title="Only Cargo Brokerage requests can become cargo listings">
+                              Not cargo
+                            </span>
                           ) : (
                             <button
                               type="button"

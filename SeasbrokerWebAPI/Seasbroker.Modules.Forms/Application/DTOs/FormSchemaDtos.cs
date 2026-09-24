@@ -147,6 +147,11 @@ public class FormFieldValidationDto
     [JsonPropertyName("noPastDates")]
     public bool? NoPastDates { get; set; }
 
+    /// <summary>Date/DateTime only: the key of another date field this one must be strictly later
+    /// than (e.g. Estimated Arrival after Cargo Ready). Skipped while that other field is empty or hidden.</summary>
+    [JsonPropertyName("afterField")]
+    public string? AfterField { get; set; }
+
     /// <summary>Number/Decimal only: permits a leading minus sign. Off by default - most numeric
     /// fields (weights, counts, capacities) can never be negative; only set this for fields that
     /// genuinely can be (e.g. sub-zero temperatures).</summary>
@@ -170,9 +175,11 @@ public class FormFieldValidationDto
     [JsonPropertyName("allowedExtensions")]
     public List<string>? AllowedExtensions { get; set; }
 
+    /// <summary>MultiSelect: fewest options to pick. Route: fewest ports on the route.</summary>
     [JsonPropertyName("minSelections")]
     public int? MinSelections { get; set; }
 
+    /// <summary>MultiSelect: most options to pick. Route: most ports on the route.</summary>
     [JsonPropertyName("maxSelections")]
     public int? MaxSelections { get; set; }
 }

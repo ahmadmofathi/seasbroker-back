@@ -1,6 +1,6 @@
 import { api, apiMultipart } from './client';
 import { adminRequest } from './adminClient';
-import type { FormSchema, FormSummary, SubmitFormResponse } from './types';
+import type { FormSchema, FormSummary, RouteStopValue, SubmitFormResponse } from './types';
 
 // ── Admin (Superuser) form-builder endpoints ──
 
@@ -35,7 +35,7 @@ export function getPublishedSchema(formKey: string): Promise<FormSchema> {
  * Non-file field values as a plain record (multiselect/checkbox-group values are string[]).
  * Files are keyed by field key; MultiFile fields may have more than one File per key.
  */
-export type SubmitFormValues = Record<string, string | string[] | boolean | number | null | undefined>;
+export type SubmitFormValues = Record<string, string | string[] | RouteStopValue[] | boolean | number | null | undefined>;
 export type SubmitFormFiles = Record<string, File[]>;
 
 export function submitForm(

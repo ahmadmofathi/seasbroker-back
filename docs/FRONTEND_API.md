@@ -487,6 +487,23 @@ Response includes `"isAdmin": true`.
 }
 ```
 
+**Create body with a route** (preferred): the first stop is the vessel's next port. When `routeStops` is sent, `openPort`/`destinationPort` can be omitted - they're set from the first and last stop. ETAs must go forward, fall inside the window, and the same port can't repeat back-to-back (max 20 stops). `PATCH` accepts `routeStops` too and replaces the whole route.
+
+```json
+{
+  "vesselId": "uuid",
+  "availableFrom": "2026-07-01T00:00:00Z",
+  "availableTo": "2026-08-01T00:00:00Z",
+  "routeStops": [
+    { "port": "Rotterdam - Netherlands", "eta": "2026-07-02T08:00:00Z" },
+    { "port": "Piraeus - Greece", "eta": "2026-07-10T08:00:00Z" },
+    { "port": "Singapore - Singapore", "eta": "2026-07-25T08:00:00Z" }
+  ]
+}
+```
+
+Matching reads the route in order: full port score only when the cargo's loading port comes before its discharge port on the route. With ETAs, the date score is full when the vessel reaches the loading port on/after the cargo ready date and the discharge port by the cargo's estimated arrival, half when it arrives late at discharge, and zero when it reaches the loading port before the cargo is ready.
+
 ---
 
 ### Matching

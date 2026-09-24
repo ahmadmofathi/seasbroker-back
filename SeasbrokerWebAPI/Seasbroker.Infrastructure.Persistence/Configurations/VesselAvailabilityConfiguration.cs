@@ -36,6 +36,8 @@ public class VesselAvailabilityConfiguration : IEntityTypeConfiguration<VesselAv
         builder.Property(a => a.DestinationPort)
             .HasMaxLength(200);
 
+        builder.OwnsMany(a => a.RouteStops, stops => stops.ToJson());
+
         builder.Property(a => a.IsActive)
             .IsRequired()
             .HasDefaultValue(true);

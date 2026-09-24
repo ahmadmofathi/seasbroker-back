@@ -46,6 +46,9 @@ public static class VesselMapper
             OpenPort = availability.OpenPort,
             DestinationPort = availability.DestinationPort,
             IsActive = availability.IsActive,
+            RouteStops = (availability.RouteStops ?? new List<RouteStop>())
+                .Select(s => new RouteStopDto { Port = s.Port, Eta = s.Eta })
+                .ToList(),
         };
     }
 }

@@ -27,7 +27,7 @@ interface FieldConfigPanelProps {
 
 const FIELD_TYPES: FormFieldType[] = [
   'Text', 'Textarea', 'Number', 'Decimal', 'Date', 'DateTime', 'Time', 'Email', 'Phone',
-  'Select', 'MultiSelect', 'Radio', 'Checkbox', 'Toggle', 'File', 'MultiFile',
+  'Select', 'MultiSelect', 'Radio', 'Checkbox', 'Toggle', 'File', 'MultiFile', 'Port', 'Route',
 ];
 
 const OPERATORS: { value: FormConditionOperator; label: string }[] = [

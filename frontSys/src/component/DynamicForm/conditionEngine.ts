@@ -1,4 +1,4 @@
-import type { FormField, FormFieldCondition } from '../../api/types';
+import type { FormField, FormFieldCondition, RouteStopValue } from '../../api/types';
 
 /**
  * Mirrors the backend's ConditionEvaluator exactly (same operators, same semantics) so a field
@@ -77,7 +77,7 @@ function toList(value?: string | null): string[] {
   return trimmed.split(',').map((v) => v.trim()).filter(Boolean);
 }
 
-export type FieldValue = string | string[] | boolean | File | File[] | null | undefined;
+export type FieldValue = string | string[] | boolean | File | File[] | RouteStopValue[] | null | undefined;
 
 /** Reduces the raw per-field value state to the flat string map conditions are evaluated against. */
 export function normalizeValues(fields: FormField[], values: Record<string, FieldValue>): Record<string, string> {

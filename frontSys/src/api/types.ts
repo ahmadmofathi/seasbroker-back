@@ -145,6 +145,8 @@ export interface VesselAvailabilityRecord extends PocketBaseRecord {
   openPort: string;
   destinationPort: string;
   isActive?: boolean;
+  /** Ordered port calls; the first is the vessel's next port. Empty for windows made before routes. */
+  routeStops?: RouteStopValue[];
 }
 
 export type MatchStatus =
@@ -246,7 +248,14 @@ export type FormFieldType =
   | 'Toggle'
   | 'File'
   | 'MultiFile'
-  | 'Port';
+  | 'Port'
+  | 'Route';
+
+/** One port call on a vessel's route, in sailing order. `eta` is a date or datetime-local string. */
+export interface RouteStopValue {
+  port: string;
+  eta: string;
+}
 
 export type FormFieldWidth = 'Full' | 'Half' | 'Third';
 
@@ -281,6 +290,7 @@ export interface FormFieldValidation {
   pattern?: string | null;
   digitsOnly?: boolean | null;
   noPastDates?: boolean | null;
+  afterField?: string | null;
   allowNegative?: boolean | null;
   noFutureYear?: boolean | null;
   fixedPrefix?: string | null;

@@ -15,4 +15,11 @@ public class VesselAvailability : AuditableEntity
     public string? DestinationPort { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// The ports the vessel will call at, in order, each with an ETA. When set, OpenPort is the first
+    /// stop and DestinationPort the last, kept in sync so older readers still see a sensible from/to.
+    /// Empty for availability windows created before routes existed.
+    /// </summary>
+    public List<RouteStop> RouteStops { get; set; } = new();
 }

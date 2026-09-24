@@ -1,17 +1,27 @@
 import { useEffect, useState } from 'react';
 import { vesselsApi } from '../../api';
-import type { VesselAvailabilityRecord, VesselRecord } from '../../api/types';
+import type { RouteStopValue, VesselAvailabilityRecord, VesselRecord } from '../../api/types';
 import { formatApiError } from '../../utils/formatApiError';
 import { useAlert } from '../../context/AlertContext';
-import { isKnownPort, portSelectOptions } from '../../utils/portOptions';
+import { isKnownPort } from '../../utils/portOptions';
+import { stopLabel, validateRoute } from '../../utils/route';
+import RouteBuilder from '../Common/RouteBuilder';
 import AdminModal from './AdminModal';
 
 type AvailabilityForm = {
   availableFrom: string;
   availableTo: string;
-  openPort: string;
-  destinationPort: string;
+  route: RouteStopValue[];
 };
+
+function describeRoute(item: VesselAvailabilityRecord): string {
+  if (item.routeStops && item.routeStops.length > 0) {
+    return item.routeStops
+      .map((s) => `${s.port} (${new Date(s.eta).toLocaleDateString()})`)
+      .join(' → ');
+  }
+  return [item.openPort, item.destinationPort].filter(Boolean).join(' → ');
+}
 
 function toLocalInput(value?: string): string {
   if (!value) return '';
@@ -28,8 +38,7 @@ function defaultAvailabilityForm(vessel: VesselRecord): AvailabilityForm {
   return {
     availableFrom: toLocalInput(from.toISOString()),
     availableTo: toLocalInput(to.toISOString()),
-    openPort: port,
-    destinationPort: '',
+    route: [{ port, eta: '' }],
   };
 }
 
@@ -60,14 +69,20 @@ const VesselAvailabilityModal: React.FC<VesselAvailabilityModalProps> = ({ vesse
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isKnownPort(form.openPort) || !isKnownPort(form.destinationPort)) {
-      showError('Please select valid open and destination ports from the list.');
-      return;
-    }
     const from = new Date(form.availableFrom);
     const to = new Date(form.availableTo);
     if (to <= from) {
       showError('Available to must be after available from.');
+      return;
+    }
+    const routeError = validateRoute(form.route, { minStops: 1 });
+    if (routeError) {
+      showError(routeError);
+      return;
+    }
+    const outside = form.route.findIndex((s) => new Date(s.eta) < from || new Date(s.eta) > to);
+    if (outside >= 0) {
+      showError(`${stopLabel(outside)}: ETA must fall within the availability window.`);
       return;
     }
     setSaving(true);
@@ -76,8 +91,7 @@ const VesselAvailabilityModal: React.FC<VesselAvailabilityModalProps> = ({ vesse
         vesselId: vessel.id,
         availableFrom: new Date(form.availableFrom).toISOString(),
         availableTo: new Date(form.availableTo).toISOString(),
-        openPort: form.openPort.trim(),
-        destinationPort: form.destinationPort.trim(),
+        routeStops: form.route.map((s) => ({ port: s.port, eta: new Date(s.eta).toISOString() })),
       });
       success('Availability window added. You can now create matches for this vessel.');
       setForm(defaultAvailabilityForm(vessel));
@@ -106,8 +120,6 @@ const VesselAvailabilityModal: React.FC<VesselAvailabilityModalProps> = ({ vesse
     }
   };
 
-  const portOptions = portSelectOptions(form.openPort);
-
   return (
     <AdminModal
       title={`Availability — ${vessel.name}`}
@@ -119,9 +131,9 @@ const VesselAvailabilityModal: React.FC<VesselAvailabilityModalProps> = ({ vesse
       }
     >
       <p className="admin-result-text" style={{ marginBottom: '1rem' }}>
-        1) Pick real ports from the list (same route as the cargo).<br />
-        2) Set dates that <strong>cover</strong> the cargo departure → arrival.<br />
-        3) Click <strong>Add window</strong>, then retry Manual Match.
+        1) Set the window the vessel is available for.<br />
+        2) Build the route: start with the <strong>next port</strong>, then <strong>Add port</strong> for each call, each with its ETA.<br />
+        3) Click <strong>Add window</strong>. Matching looks for the cargo's loading port, then its discharge port, in that order.
       </p>
 
       {loading ? (
@@ -137,8 +149,7 @@ const VesselAvailabilityModal: React.FC<VesselAvailabilityModalProps> = ({ vesse
                   <tr>
                     <th>From</th>
                     <th>To</th>
-                    <th>Open Port</th>
-                    <th>Destination</th>
+                    <th>Route</th>
                     <th>Status</th>
                     <th />
                   </tr>
@@ -148,8 +159,7 @@ const VesselAvailabilityModal: React.FC<VesselAvailabilityModalProps> = ({ vesse
                     <tr key={item.id}>
                       <td>{new Date(item.availableFrom).toLocaleString()}</td>
                       <td>{new Date(item.availableTo).toLocaleString()}</td>
-                      <td>{item.openPort}</td>
-                      <td>{item.destinationPort}</td>
+                      <td>{describeRoute(item)}</td>
                       <td>
                         <span className="admin-badge">{item.isActive === false ? 'Inactive' : 'Active'}</span>
                       </td>
@@ -199,39 +209,14 @@ const VesselAvailabilityModal: React.FC<VesselAvailabilityModalProps> = ({ vesse
                 onChange={(e) => setForm((f) => ({ ...f, availableTo: e.target.value }))}
               />
             </div>
-            <div className="admin-field">
-              <label htmlFor="av-open">Open port</label>
-              <select
-                id="av-open"
-                className="admin-input"
-                required
-                value={form.openPort}
-                onChange={(e) => setForm((f) => ({ ...f, openPort: e.target.value }))}
-              >
-                <option value="">Select port…</option>
-                {portOptions.map((p) => (
-                  <option key={p.value} value={p.value}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="admin-field">
-              <label htmlFor="av-dest">Destination port</label>
-              <select
-                id="av-dest"
-                className="admin-input"
-                required
-                value={form.destinationPort}
-                onChange={(e) => setForm((f) => ({ ...f, destinationPort: e.target.value }))}
-              >
-                <option value="">Select port…</option>
-                {portSelectOptions(form.destinationPort).map((p) => (
-                  <option key={`dest-${p.value}`} value={p.value}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
+            <div className="admin-field full">
+              <label>Route</label>
+              <RouteBuilder
+                stops={form.route}
+                onChange={(route) => { setForm((f) => ({ ...f, route })); }}
+                etaType="datetime-local"
+                minEta={form.availableFrom}
+              />
             </div>
             <div className="admin-field full">
               <button type="submit" className="admin-btn-sm primary" disabled={saving}>

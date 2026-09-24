@@ -27,10 +27,14 @@ public static class FormFieldType
     public const string MultiFile = "MultiFile";
     public const string Port = "Port";
 
+    /// <summary>An ordered list of port calls, each with an ETA - saved as a JSON array of
+    /// {"port","eta"}. The first stop is the vessel's next port.</summary>
+    public const string Route = "Route";
+
     public static readonly IReadOnlySet<string> All = new HashSet<string>
     {
         Text, Textarea, Number, Decimal, Date, DateTime, Time, Email, Phone,
-        Select, MultiSelect, Radio, Checkbox, Toggle, File, MultiFile, Port,
+        Select, MultiSelect, Radio, Checkbox, Toggle, File, MultiFile, Port, Route,
     };
 
     public static readonly IReadOnlySet<string> OptionBased = new HashSet<string>

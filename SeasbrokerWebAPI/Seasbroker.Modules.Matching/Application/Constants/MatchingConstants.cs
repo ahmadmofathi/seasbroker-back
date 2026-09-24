@@ -30,5 +30,15 @@ public static class MatchingConstants
             ["General Cargo"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "General Cargo", "Bulk", "RoRo" },
             ["LNG"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "LNG", "Tanker" },
             ["LPG"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "LPG", "Tanker" },
+
+            // Cargo types as the public Cargo Brokerage form submits them (see FormSeedData.CargoTypeOptions).
+            // "Other" is left out on purpose - it scores 0 on type and needs a broker's judgement.
+            ["Dry Bulk"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Bulk", "General Cargo" },
+            ["General & Breakbulk Cargo"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "General Cargo", "Bulk", "RoRo" },
+            ["Project & Heavy-Lift Cargo"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "General Cargo", "RoRo" },
+            ["Containerized Cargo"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Container" },
+            ["Liquid Bulk"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Tanker" },
+            ["Gas"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "LNG", "LPG", "Tanker" },
+            ["Refrigerated & Perishable Cargo"] = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Container", "General Cargo" },
         };
 }

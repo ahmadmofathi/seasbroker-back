@@ -68,7 +68,8 @@ public class VesselAvailabilitiesRecordsController : ControllerBase
                 request.AvailableFrom,
                 request.AvailableTo,
                 request.OpenPort,
-                request.DestinationPort),
+                request.DestinationPort,
+                request.RouteStops),
             cancellationToken);
 
         return Ok(availability);
@@ -93,7 +94,8 @@ public class VesselAvailabilitiesRecordsController : ControllerBase
                 request.AvailableTo,
                 request.OpenPort,
                 request.DestinationPort,
-                request.IsActive),
+                request.IsActive,
+                request.RouteStops),
             cancellationToken);
 
         return Ok(availability);

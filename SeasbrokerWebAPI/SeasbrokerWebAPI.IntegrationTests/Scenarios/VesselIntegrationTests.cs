@@ -19,6 +19,63 @@ public sealed class VesselIntegrationTests
     }
 
     [Fact]
+    public async Task Availability_Route_RoundTripsThroughTheDatabase()
+    {
+        var adminClient = _fixture.CreateAuthenticatedClient(await _fixture.Client.LoginSuperuserAsync());
+        var ownerEmail = UniqueTestData.Email("route-owner");
+        await CreateQuoteCustomerAsync(ownerEmail);
+        var customerId = await TestDataQueries.GetCustomerIdForEmailAsync(_fixture.Factory.Services, ownerEmail);
+
+        var vesselResponse = await adminClient.PostAsJsonAsync(
+            "/api/collections/vessels/records",
+            new CreateVesselRequest
+            {
+                Name = "Integration Route Carrier",
+                ImoNumber = IntegrationTestDefaults.ImoNumber(),
+                VesselType = IntegrationTestDefaults.CargoType,
+                Dwt = 15000,
+                CurrentPort = IntegrationTestDefaults.DeparturePort,
+                Status = VesselStatus.Active,
+                Customer = customerId.ToString(),
+            },
+            IntegrationJson.Options);
+        vesselResponse.EnsureSuccessStatusCode();
+        var vessel = await vesselResponse.Content.ReadFromJsonAsync<VesselRecordDto>(IntegrationJson.Options);
+        Assert.NotNull(vessel);
+
+        var from = IntegrationTestDefaults.DepartureTimeUtc.AddDays(-1);
+        var createResponse = await adminClient.PostAsJsonAsync(
+            "/api/collections/vesselAvailabilities/records",
+            new CreateVesselAvailabilityRequest
+            {
+                VesselId = vessel.Id,
+                AvailableFrom = from,
+                AvailableTo = IntegrationTestDefaults.ArrivalTimeUtc.AddDays(1),
+                RouteStops = new List<RouteStopDto>
+                {
+                    new() { Port = IntegrationTestDefaults.DeparturePort, Eta = from.AddHours(12) },
+                    new() { Port = "Transit Port", Eta = from.AddDays(2) },
+                    new() { Port = IntegrationTestDefaults.ArrivalPort, Eta = IntegrationTestDefaults.ArrivalTimeUtc },
+                },
+            },
+            IntegrationJson.Options);
+        createResponse.EnsureSuccessStatusCode();
+
+        var listResponse = await adminClient.GetAsync(
+            $"/api/collections/vesselAvailabilities/records?filter=vesselId%20%3D%20%22{vessel.Id}%22");
+        listResponse.EnsureSuccessStatusCode();
+        var list = await listResponse.Content.ReadFromJsonAsync<PocketBaseListResponse<VesselAvailabilityRecordDto>>(IntegrationJson.Options);
+        Assert.NotNull(list);
+
+        var stored = Assert.Single(list.Items);
+        Assert.Equal(
+            new[] { IntegrationTestDefaults.DeparturePort, "Transit Port", IntegrationTestDefaults.ArrivalPort },
+            stored.RouteStops.Select(s => s.Port));
+        Assert.Equal(IntegrationTestDefaults.DeparturePort, stored.OpenPort);
+        Assert.Equal(IntegrationTestDefaults.ArrivalPort, stored.DestinationPort);
+    }
+
+    [Fact]
     public async Task VesselCrud_AndAvailabilityLifecycle_Work()
     {
         var adminClient = _fixture.CreateAuthenticatedClient(await _fixture.Client.LoginSuperuserAsync());

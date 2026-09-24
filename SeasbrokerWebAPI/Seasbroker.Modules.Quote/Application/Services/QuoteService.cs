@@ -123,6 +123,15 @@ public class QuoteService : IQuoteService
             .Where(c => c.RequestedQuoteId != null && quoteIds.Contains(c.RequestedQuoteId.Value))
             .ToDictionaryAsync(c => c.RequestedQuoteId!.Value, c => c.Id, cancellationToken);
 
+        var sourceFormKeys = await _dbContext.FormSubmissions
+            .AsNoTracking()
+            .Where(s => s.RequestedQuoteId != null && quoteIds.Contains(s.RequestedQuoteId.Value))
+            .Select(s => new { QuoteId = s.RequestedQuoteId!.Value, s.FormVersion.FormDefinition.Key })
+            .ToListAsync(cancellationToken);
+        var sourceFormKeyByQuoteId = sourceFormKeys
+            .GroupBy(s => s.QuoteId)
+            .ToDictionary(g => g.Key, g => g.First().Key);
+
         return new PocketBaseListResponse<RequestedQuoteRecordDto>
         {
             Page = page,
@@ -130,7 +139,10 @@ public class QuoteService : IQuoteService
             TotalItems = totalItems,
             TotalPages = totalPages,
             Items = quotes
-                .Select(q => QuoteMapper.ToRecordDto(q, promotedListingIdByQuoteId.TryGetValue(q.Id, out var listingId) ? listingId : (Guid?)null))
+                .Select(q => QuoteMapper.ToRecordDto(
+                    q,
+                    promotedListingIdByQuoteId.TryGetValue(q.Id, out var listingId) ? listingId : (Guid?)null,
+                    sourceFormKeyByQuoteId.GetValueOrDefault(q.Id)))
                 .ToList(),
         };
     }
@@ -149,7 +161,24 @@ public class QuoteService : IQuoteService
             .Include(q => q.Customer)
             .FirstOrDefaultAsync(q => q.Id == quoteId, cancellationToken);
 
-        return quote is null ? null : QuoteMapper.ToRecordDto(quote);
+        if (quote is null)
+        {
+            return null;
+        }
+
+        var cargoListingId = await _dbContext.CargoListings
+            .AsNoTracking()
+            .Where(c => c.RequestedQuoteId == quoteId)
+            .Select(c => (Guid?)c.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var sourceFormKey = await _dbContext.FormSubmissions
+            .AsNoTracking()
+            .Where(s => s.RequestedQuoteId == quoteId)
+            .Select(s => s.FormVersion.FormDefinition.Key)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return QuoteMapper.ToRecordDto(quote, cargoListingId, sourceFormKey);
     }
 
     private static DateTime ParseDateOrThrow(string value, string fieldName)

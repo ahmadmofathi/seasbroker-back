@@ -117,4 +117,23 @@ public class FormSchemaValidatorTests
         var schema = SingleSectionSchema(a, b, c, d);
         FormSchemaValidator.Validate(schema); // should not throw
     }
+
+    [Fact]
+    public void AfterField_Must_Reference_A_Date_Field()
+    {
+        var arrival = Field("arrival", type: FormFieldType.Date);
+        arrival.Validation = new FormFieldValidationDto { AfterField = "notes" };
+
+        Assert.Throws<FormsException>(() => FormSchemaValidator.Validate(SingleSectionSchema(Field("notes"), arrival)));
+        Assert.Throws<FormsException>(() => FormSchemaValidator.Validate(SingleSectionSchema(arrival)));
+    }
+
+    [Fact]
+    public void AfterField_Accepts_Another_Date_Field()
+    {
+        var arrival = Field("arrival", type: FormFieldType.Date);
+        arrival.Validation = new FormFieldValidationDto { AfterField = "ready" };
+
+        FormSchemaValidator.Validate(SingleSectionSchema(Field("ready", type: FormFieldType.Date), arrival));
+    }
 }

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Seasbroker.Infrastructure.Persistence;
 using Seasbroker.Infrastructure.Persistence.Entities;
 using Seasbroker.Modules.Vessel.Application.Constants;
+using Seasbroker.Modules.Vessel.Application.DTOs;
 using Seasbroker.Modules.Vessel.Application.Exceptions;
 
 namespace Seasbroker.Modules.Vessel.Application.Helpers;
@@ -88,6 +89,61 @@ internal static class VesselDomainHelper
                 $"Availability window cannot exceed {VesselConstants.MaxAvailabilityWindowDays} days.",
                 StatusCodes.Status400BadRequest);
         }
+    }
+
+    /// <summary>
+    /// Checks an ordered route and turns it into stored stops: every stop needs a port, ETAs must go
+    /// strictly forward, the same port can't repeat back-to-back, and every ETA must fall inside the
+    /// availability window.
+    /// </summary>
+    public static List<RouteStop> BuildRoute(IReadOnlyList<RouteStopDto> stops, DateTime from, DateTime to)
+    {
+        if (stops.Count > VesselConstants.MaxRouteStops)
+        {
+            throw new VesselException(
+                $"A route can have at most {VesselConstants.MaxRouteStops} ports.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        var route = new List<RouteStop>();
+        for (var i = 0; i < stops.Count; i++)
+        {
+            var port = stops[i].Port?.Trim() ?? string.Empty;
+            var eta = stops[i].Eta;
+            var label = i == 0 ? "Next port" : $"Port {i + 1}";
+
+            if (port.Length is < 2 or > 200)
+            {
+                throw new VesselException($"{label} needs a port.", StatusCodes.Status400BadRequest);
+            }
+
+            if (eta < from || eta > to)
+            {
+                throw new VesselException(
+                    $"{label} ETA must fall within the availability window.",
+                    StatusCodes.Status400BadRequest);
+            }
+
+            if (i > 0)
+            {
+                var previous = route[i - 1];
+                if (string.Equals(previous.Port, port, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new VesselException($"{label} repeats the port before it.", StatusCodes.Status400BadRequest);
+                }
+
+                if (eta <= previous.Eta)
+                {
+                    throw new VesselException(
+                        $"{label} ETA must be after the previous port's ETA.",
+                        StatusCodes.Status400BadRequest);
+                }
+            }
+
+            route.Add(new RouteStop { Port = port, Eta = eta });
+        }
+
+        return route;
     }
 
     public static async Task<List<(Guid Id, DateTime From, DateTime To)>> GetActiveAvailabilityWindowsAsync(

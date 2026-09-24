@@ -4,10 +4,13 @@ public static class FormsConstants
 {
     public const string SuperuserPolicy = "Superuser";
 
+    /// <summary>Upper bound on ports in a Route field when the field doesn't set its own maximum.</summary>
+    public const int MaxRouteStops = 20;
+
     /// <summary>The fixed set of forms this feature manages. Admins configure these, they don't create new ones.</summary>
     public static class FormKeys
     {
-        public const string RequestQuote = "request-quote";
+        public const string RequestQuote = Seasbroker.Infrastructure.Persistence.Entities.FormDefinition.CargoRequestKey;
         public const string RequestRoute = "request-route";
         public const string RequestClearance = "request-clearance";
 

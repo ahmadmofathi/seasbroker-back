@@ -30,8 +30,9 @@ public static class MatchingScoreCalculator
         var typeWeight = GetWeight(ruleWeights, MatchingConstants.CriterionType, 15m);
         var priorityWeight = GetWeight(ruleWeights, MatchingConstants.CriterionPriority, 5m);
 
-        var portRatio = CalculatePortCompatibility(cargo, vessel, availability);
-        var dateRatio = CalculateDateOverlap(cargo, availability);
+        var routeMatch = RouteMatch.Find(cargo, vessel, availability);
+        var portRatio = CalculatePortCompatibility(routeMatch);
+        var dateRatio = CalculateRouteTiming(cargo, routeMatch) ?? CalculateDateOverlap(cargo, availability);
         var capacityRatio = CalculateCapacityCompatibility(cargo, vessel);
         var typeRatio = CalculateTypeCompatibility(cargo, vessel);
         var priorityRatio = CalculatePriorityBoost(cargo);
@@ -72,17 +73,14 @@ public static class MatchingScoreCalculator
         return ruleWeights.TryGetValue(criterion, out var weight) ? weight : defaultWeight;
     }
 
-    private static decimal CalculatePortCompatibility(
-        CargoListing cargo,
-        Vessel vessel,
-        VesselAvailability availability)
+    /// <summary>
+    /// 1 when the vessel calls at the loading port and then the discharge port, in that order;
+    /// 0.7 for the loading port only; 0.4 for the discharge port only.
+    /// </summary>
+    private static decimal CalculatePortCompatibility(RouteMatch routeMatch)
     {
-        var departureMatch =
-            PortsEqual(cargo.DeparturePort, availability.OpenPort) ||
-            PortsEqual(cargo.DeparturePort, vessel.CurrentPort);
-
-        var arrivalMatch = !string.IsNullOrWhiteSpace(availability.DestinationPort) &&
-                           PortsEqual(cargo.ArrivalPort, availability.DestinationPort);
+        var departureMatch = routeMatch.CanLoad;
+        var arrivalMatch = routeMatch.Discharge is not null;
 
         if (departureMatch && arrivalMatch)
         {
@@ -100,6 +98,33 @@ public static class MatchingScoreCalculator
         }
 
         return 0m;
+    }
+
+    /// <summary>
+    /// Uses the route's ETAs when the vessel calls at the loading port: it must get there on or after
+    /// the cargo ready date (1), and ideally reach the discharge port by the cargo's estimated arrival
+    /// date (otherwise 0.5). Arriving at the loading port before the cargo is ready scores 0.
+    /// Returns null when there's no ETA to judge by, so the plain window overlap is used instead.
+    /// </summary>
+    private static decimal? CalculateRouteTiming(CargoListing cargo, RouteMatch routeMatch)
+    {
+        if (routeMatch.Loading?.Eta is not { } loadingEta)
+        {
+            return null;
+        }
+
+        if (loadingEta < cargo.DepartureTime.Date)
+        {
+            return 0m;
+        }
+
+        var dischargeEta = routeMatch.Discharge?.Eta;
+        if (dischargeEta is not null && dischargeEta.Value >= cargo.ArrivalTime.Date.AddDays(1))
+        {
+            return 0.5m;
+        }
+
+        return 1m;
     }
 
     private static decimal CalculateDateOverlap(CargoListing cargo, VesselAvailability availability)
@@ -157,7 +182,4 @@ public static class MatchingScoreCalculator
     {
         return Math.Clamp(cargo.Priority / 5m, 0m, 1m);
     }
-
-    private static bool PortsEqual(string left, string right) =>
-        string.Equals(left.Trim(), right.Trim(), StringComparison.OrdinalIgnoreCase);
 }

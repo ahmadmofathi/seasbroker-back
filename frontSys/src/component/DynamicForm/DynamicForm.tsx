@@ -49,9 +49,12 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ schema, onSubmit, submitLabel
     e.preventDefault();
 
     const nextErrors: Record<string, string> = {};
+    const visibleFields = fields
+      .filter((f) => visibility[f.key])
+      .map((f) => ({ field: f, value: values[f.key] }));
     for (const field of fields) {
       if (!visibility[field.key]) continue;
-      const message = validateField(field, values[field.key]);
+      const message = validateField(field, values[field.key], visibleFields);
       if (message) nextErrors[field.key] = message;
     }
 

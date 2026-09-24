@@ -23,11 +23,13 @@ public static class QuoteMapper
 
     public static RequestedQuoteRecordDto ToRecordDto(
         global::Seasbroker.Infrastructure.Persistence.Entities.RequestedQuote quote,
-        Guid? cargoListingId = null)
+        Guid? cargoListingId = null,
+        string? sourceFormKey = null)
     {
         return new RequestedQuoteRecordDto
         {
             IsPromoted = cargoListingId.HasValue,
+            CanPromote = global::Seasbroker.Infrastructure.Persistence.Entities.RequestedQuote.IsCargoRequest(quote.CargoType, sourceFormKey),
             CargoListingId = cargoListingId?.ToString(),
             Id = quote.Id.ToString(),
             CollectionId = QuoteConstants.RequestedQuotesCollectionName,

@@ -39,22 +39,25 @@ public static class FormSeedData
                 Section("shipment-route", "Shipment Route", 1,
                     Port("departurePort", "Departure / Loading Port", 0, required: true, systemKey: FormsConstants.SystemFieldKeys.DeparturePort, width: FormFieldWidth.Half),
                     Port("arrivalPort", "Arrival / Discharge Port", 1, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalPort, width: FormFieldWidth.Half),
-                    Date("cargoReadyDate", "Cargo Ready Date", 2, required: true, systemKey: FormsConstants.SystemFieldKeys.DepartureTime, width: FormFieldWidth.Half),
-                    Date("estimatedArrivalDate", "Estimated Arrival Date", 3, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half),
-                    Select("dangerousGoods", "Dangerous Goods?", 4, required: true, options: YesNoOptions, width: FormFieldWidth.Half),
+                    Date("cargoReadyDate", "Cargo Ready Date", 2, required: true, systemKey: FormsConstants.SystemFieldKeys.DepartureTime, width: FormFieldWidth.Half, validation: NoPastDates),
+                    Date("estimatedArrivalDate", "Estimated Arrival Date", 3, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half,
+                        validation: new FormFieldValidationDto { NoPastDates = true, AfterField = "cargoReadyDate" }),
+                    // Gas cargo is always dangerous, so the question is only asked for other cargo types.
+                    WithCondition(Select("dangerousGoods", "Dangerous Goods?", 4, required: true, options: YesNoOptions, width: FormFieldWidth.Half),
+                        "cargoType", FormConditionOperator.NotEquals, "Gas"),
                     Textarea("remarks", "Remarks / Special Requirements", 5, systemKey: FormsConstants.SystemFieldKeys.AdditionalInfo),
-                    File("documentsFile", "Documents / Photos", 6)),
+                    MultiFile("documentsFile", "Documents / Photos", 6)),
 
                 Section("dangerous-goods", "Dangerous Goods Details", 2,
-                    ConditionalOn("dangerousGoods", "Yes", Text("unNumber", "UN Number", 0, required: true, width: FormFieldWidth.Third, placeholder: "1234",
+                    ConditionalOnDangerousCargo(Text("unNumber", "UN Number", 0, required: true, width: FormFieldWidth.Third, placeholder: "1234",
                         validation: new FormFieldValidationDto { Pattern = "^UN \\d{4}$", MaxLength = 4, DigitsOnly = true, FixedPrefix = "UN" })),
-                    ConditionalOn("dangerousGoods", "Yes", Text("properShippingName", "Proper Shipping Name", 1, required: true, width: FormFieldWidth.Third)),
-                    ConditionalOn("dangerousGoods", "Yes", Text("imoClass", "IMO/IMDG Class", 2, required: true, width: FormFieldWidth.Third)),
-                    ConditionalOn("dangerousGoods", "Yes", Select("packingGroup", "Packing Group", 3, required: true, width: FormFieldWidth.Third,
+                    ConditionalOnDangerousCargo(Text("properShippingName", "Proper Shipping Name", 1, required: true, width: FormFieldWidth.Third)),
+                    ConditionalOnDangerousCargo(Text("imoClass", "IMO/IMDG Class", 2, required: true, width: FormFieldWidth.Third)),
+                    ConditionalOnDangerousCargo(Select("packingGroup", "Packing Group", 3, required: true, width: FormFieldWidth.Third,
                         options: new[] { ("I", "I"), ("II", "II"), ("III", "III"), ("N/A", "N/A") })),
-                    ConditionalOn("dangerousGoods", "Yes", Number("flashPointDg", "Flash Point (°C)", 4, width: FormFieldWidth.Third, validation: AllowNegative)),
-                    ConditionalOn("dangerousGoods", "Yes", Select("marinePollutant", "Marine Pollutant", 5, options: YesNoOptions, width: FormFieldWidth.Third)),
-                    ConditionalOn("dangerousGoods", "Yes", File("sdsFile", "SDS/MSDS", 6))),
+                    ConditionalOnDangerousCargo(Number("flashPointDg", "Flash Point (°C)", 4, width: FormFieldWidth.Third, validation: AllowNegative)),
+                    ConditionalOnDangerousCargo(Select("marinePollutant", "Marine Pollutant", 5, options: YesNoOptions, width: FormFieldWidth.Third)),
+                    ConditionalOnDangerousCargo(File("sdsFile", "SDS/MSDS", 6))),
 
                 Section("dry-bulk", "Dry Bulk", 3,
                     ConditionalOnCargoType("Dry Bulk", Text("dryBulkCommodity", "Commodity", 0, required: true, width: FormFieldWidth.Third)),
@@ -95,7 +98,7 @@ public static class FormSeedData
                     ConditionalOnCargoType("Project & Heavy-Lift Cargo", Number("projHeight", "Largest Unit Height (m)", 6, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Project & Heavy-Lift Cargo", Select("projCoGAvailable", "Center of Gravity Available?", 7, required: true, options: YesNoOptions, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Project & Heavy-Lift Cargo", Select("projLiftingPointsAvailable", "Lifting Points Available?", 8, required: true, options: YesNoOptions, width: FormFieldWidth.Third)),
-                    ConditionalOnCargoType("Project & Heavy-Lift Cargo", File("projDrawingsFile", "Drawings / Packing List", 9, required: true)),
+                    ConditionalOnCargoType("Project & Heavy-Lift Cargo", MultiFile("projDrawingsFile", "Drawings / Packing List", 9, required: true)),
                     ConditionalOnCargoType("Project & Heavy-Lift Cargo", Number("projVolume", "Total Volume (m³)", 10, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Project & Heavy-Lift Cargo", Number("projLiftingPointCapacity", "Lifting Point Capacity (MT)", 11, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Project & Heavy-Lift Cargo", Number("projCoG", "Center of Gravity (m)", 12, width: FormFieldWidth.Third)),
@@ -185,7 +188,7 @@ public static class FormSeedData
                     ConditionalOnCargoType("Other", Number("otherWeight", "Total Weight (MT)", 2, required: true, systemKey: FormsConstants.SystemFieldKeys.Weight, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Other", Number("otherVolume", "Total Volume (m³)", 3, required: true, width: FormFieldWidth.Third)),
                     ConditionalOnCargoType("Other", Text("otherDimensions", "Largest Dimensions (m)", 4, width: FormFieldWidth.Third)),
-                    ConditionalOnCargoType("Other", File("otherDocFile", "Documents", 5)),
+                    ConditionalOnCargoType("Other", MultiFile("otherDocFile", "Documents", 5)),
                     ConditionalOnCargoType("Other", Textarea("otherSpecialRequirements", "Special Requirements", 6))),
 
                 ContactSection(12),
@@ -288,11 +291,9 @@ public static class FormSeedData
                     ConditionalOn("availabilityType", "Open Vessel", Date("openDate", "Open Date", 2, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half, validation: NoPastDates)),
                     ConditionalOn("availabilityType", "Open Vessel", Port("preferredTradingArea", "Preferred Trading Area", 3, width: FormFieldWidth.Half)),
                     ConditionalOn("availabilityType", "Open Vessel", Port("preferredDestinationArea", "Preferred Destination Area", 4, width: FormFieldWidth.Half)),
-                    ConditionalOn("availabilityType", "Scheduled Route", Port("schedDeparturePort", "Departure Port", 5, required: true, width: FormFieldWidth.Half)),
-                    ConditionalOn("availabilityType", "Scheduled Route", Date("schedDepartureDate", "Departure Date", 6, required: true, width: FormFieldWidth.Half, validation: NoPastDates)),
-                    ConditionalOn("availabilityType", "Scheduled Route", Port("schedDestinationPort", "Destination Port", 7, required: true, width: FormFieldWidth.Half)),
-                    ConditionalOn("availabilityType", "Scheduled Route", Field("schedEta", "ETA", FormFieldType.DateTime, 8, required: true, systemKey: FormsConstants.SystemFieldKeys.ArrivalTime, width: FormFieldWidth.Half, validation: NoPastDates)),
-                    ConditionalOn("availabilityType", "Scheduled Route", Text("transitPorts", "Transit Ports", 9))),
+                    // Next port first, then "Add port" for each call until the route is complete.
+                    ConditionalOn("availabilityType", "Scheduled Route", Field("schedRoute", "Route", FormFieldType.Route, 5, required: true,
+                        validation: new FormFieldValidationDto { NoPastDates = true, MinSelections = 2 }))),
 
                 Section("additional-information", "Additional Information", 10,
                     Textarea("remarks", "Remarks", 0, systemKey: FormsConstants.SystemFieldKeys.AdditionalInfo)),
@@ -374,7 +375,7 @@ public static class FormSeedData
                     File("certificateOfOrigin", "Certificate of Origin", 3, width: FormFieldWidth.Third),
                     File("importExportLicence", "Import / Export Licence", 4, width: FormFieldWidth.Third),
                     File("sdsMsdsDoc", "SDS / MSDS", 5, width: FormFieldWidth.Third),
-                    File("otherSupportingDocs", "Other Supporting Documents", 6, width: FormFieldWidth.Third)),
+                    MultiFile("otherSupportingDocs", "Other Supporting Documents", 6, width: FormFieldWidth.Third)),
 
                 ContactSection(9, firstNameLabel: "Company Name", lastNameLabel: "Contact Person",
                     trailingFields: new FormFieldDto[]
@@ -548,11 +549,31 @@ public static class FormSeedData
     private static FormFieldDto File(string key, string label, int order, bool required = false, string width = "Full") =>
         Field(key, label, FormFieldType.File, order, required, null, width);
 
+    private static FormFieldDto MultiFile(string key, string label, int order, bool required = false, string width = "Full") =>
+        Field(key, label, FormFieldType.MultiFile, order, required, null, width);
+
     private static FormFieldDto Port(string key, string label, int order, bool required = false, string? systemKey = null, string width = "Full") =>
         Field(key, label, FormFieldType.Port, order, required, systemKey, width);
 
     private static FormFieldDto ConditionalOn(string sourceKey, string value, FormFieldDto field) =>
         WithConditions(field, new[] { (sourceKey, value) });
+
+    /// <summary>Dangerous-goods detail fields: shown when the shipper answers "Yes", or always for
+    /// Gas cargo, which is inherently dangerous and never asks the question.</summary>
+    private static FormFieldDto ConditionalOnDangerousCargo(FormFieldDto field)
+    {
+        field.ConditionCombinator = FormConditionCombinator.Or;
+        field.Conditions.Add(new FormFieldConditionDto { SourceFieldKey = "dangerousGoods", Operator = FormConditionOperator.EqualsOp, Value = "Yes" });
+        field.Conditions.Add(new FormFieldConditionDto { SourceFieldKey = "cargoType", Operator = FormConditionOperator.EqualsOp, Value = "Gas" });
+        return field;
+    }
+
+    private static FormFieldDto WithCondition(FormFieldDto field, string sourceKey, string op, string value)
+    {
+        field.ConditionCombinator = FormConditionCombinator.And;
+        field.Conditions.Add(new FormFieldConditionDto { SourceFieldKey = sourceKey, Operator = op, Value = value });
+        return field;
+    }
 
     private static FormFieldDto ConditionalOnCargoType(string cargoTypeValue, FormFieldDto field) =>
         ConditionalOn("cargoType", cargoTypeValue, field);

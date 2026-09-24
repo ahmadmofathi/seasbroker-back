@@ -62,6 +62,7 @@ public class FormSubmissionService : IFormSubmissionService
         foreach (var field in visibleFields)
         {
             ValidateField(field, normalized.GetValueOrDefault(field.Key), files);
+            ValidateAfterField(field, visibleFields, normalized);
         }
 
         var systemValues = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
@@ -158,6 +159,99 @@ public class FormSubmissionService : IFormSubmissionService
         };
     }
 
+    private static void ValidateAfterField(FormFieldDto field, List<FormFieldDto> visibleFields, Dictionary<string, string?> values)
+    {
+        var afterKey = field.Validation?.AfterField;
+        if (string.IsNullOrWhiteSpace(afterKey))
+        {
+            return;
+        }
+
+        var other = visibleFields.FirstOrDefault(f => string.Equals(f.Key, afterKey, StringComparison.OrdinalIgnoreCase));
+        if (other is null ||
+            !DateTime.TryParse(values.GetValueOrDefault(field.Key), CultureInfo.InvariantCulture, DateTimeStyles.None, out var date) ||
+            !DateTime.TryParse(values.GetValueOrDefault(other.Key), CultureInfo.InvariantCulture, DateTimeStyles.None, out var otherDate))
+        {
+            return;
+        }
+
+        if (date <= otherDate)
+        {
+            throw new FormsException($"'{field.Label}' must be after '{other.Label}'.", StatusCodes.Status400BadRequest);
+        }
+    }
+
+    private sealed record RouteStopValue(
+        [property: System.Text.Json.Serialization.JsonPropertyName("port")] string? Port,
+        [property: System.Text.Json.Serialization.JsonPropertyName("eta")] string? Eta);
+
+    private static List<RouteStopValue> ParseRoute(string? json)
+    {
+        try
+        {
+            return string.IsNullOrWhiteSpace(json)
+                ? new List<RouteStopValue>()
+                : JsonSerializer.Deserialize<List<RouteStopValue>>(json) ?? new List<RouteStopValue>();
+        }
+        catch (JsonException)
+        {
+            return new List<RouteStopValue> { new(null, null) };
+        }
+    }
+
+    private static void ValidateRoute(FormFieldDto field, string? value)
+    {
+        var v = field.Validation;
+        var stops = ParseRoute(value);
+
+        if (v?.MinSelections is not null && stops.Count < v.MinSelections)
+        {
+            throw new FormsException($"'{field.Label}' needs at least {v.MinSelections} ports.", StatusCodes.Status400BadRequest);
+        }
+
+        var max = v?.MaxSelections ?? FormsConstants.MaxRouteStops;
+        if (stops.Count > max)
+        {
+            throw new FormsException($"'{field.Label}' allows at most {max} ports.", StatusCodes.Status400BadRequest);
+        }
+
+        DateTime? previousEta = null;
+        string? previousPort = null;
+        for (var i = 0; i < stops.Count; i++)
+        {
+            var stopLabel = i == 0 ? "Next port" : $"Port {i + 1}";
+            var port = stops[i].Port?.Trim();
+
+            if (string.IsNullOrEmpty(port) || port.Length > 255)
+            {
+                throw new FormsException($"'{field.Label}': {stopLabel} needs a port.", StatusCodes.Status400BadRequest);
+            }
+
+            if (!DateTime.TryParse(stops[i].Eta, CultureInfo.InvariantCulture, DateTimeStyles.None, out var eta))
+            {
+                throw new FormsException($"'{field.Label}': {stopLabel} needs a valid ETA.", StatusCodes.Status400BadRequest);
+            }
+
+            if (v?.NoPastDates == true && eta.Date < DateTime.UtcNow.Date)
+            {
+                throw new FormsException($"'{field.Label}': {stopLabel} ETA cannot be in the past.", StatusCodes.Status400BadRequest);
+            }
+
+            if (string.Equals(port, previousPort, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new FormsException($"'{field.Label}': {stopLabel} repeats the port before it.", StatusCodes.Status400BadRequest);
+            }
+
+            if (previousEta is not null && eta <= previousEta)
+            {
+                throw new FormsException($"'{field.Label}': {stopLabel} ETA must be after the previous port's ETA.", StatusCodes.Status400BadRequest);
+            }
+
+            previousPort = port;
+            previousEta = eta;
+        }
+    }
+
     private static void ValidateField(FormFieldDto field, string? value, IFormFileCollection files)
     {
         var isFile = FormFieldType.FileBased.Contains(field.Type);
@@ -234,6 +328,10 @@ public class FormSubmissionService : IFormSubmissionService
                     throw new FormsException($"'{field.Label}' cannot be a date in the past.", StatusCodes.Status400BadRequest);
                 }
 
+                break;
+
+            case var t when t == FormFieldType.Route:
+                ValidateRoute(field, value);
                 break;
 
             case var t when t == FormFieldType.File || t == FormFieldType.MultiFile:
@@ -365,6 +463,11 @@ public class FormSubmissionService : IFormSubmissionService
         if (field.Type == FormFieldType.MultiSelect && value is not null)
         {
             return string.Join(", ", ParseJsonStringArray(value));
+        }
+
+        if (field.Type == FormFieldType.Route && value is not null)
+        {
+            return string.Join(" → ", ParseRoute(value).Select(s => $"{s.Port} (ETA {s.Eta})"));
         }
 
         return value ?? string.Empty;

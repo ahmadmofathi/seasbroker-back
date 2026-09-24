@@ -162,4 +162,59 @@ public class CargoBusinessRulesTests
         await Assert.ThrowsAsync<Application.Exceptions.CargoException>(() =>
             handler.HandleAsync(new PromoteQuoteToCargoCommand(quote.Id.ToString(), null, null, null)));
     }
+
+    [Theory]
+    [InlineData("Dry Bulk", "request-route")]
+    [InlineData("Dry Bulk", "request-clearance")]
+    [InlineData(RequestedQuote.ContactInquiryCargoType, null)]
+    public async Task PromoteQuote_RejectsRequestsThatAreNotCargo(string cargoType, string? sourceFormKey)
+    {
+        var options = new DbContextOptionsBuilder<SeasbrokerDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        await using var dbContext = new SeasbrokerDbContext(options);
+
+        var customer = new Customer { Email = "ship@test.com", PhoneNumber = "123", FirstName = "Test", LastName = "User" };
+        dbContext.Customers.Add(customer);
+
+        var quote = new RequestedQuote
+        {
+            CustomerId = customer.Id,
+            CargoType = cargoType,
+            Weight = 500,
+            DeparturePort = "Hamburg",
+            DepartureTime = "2026-08-01T00:00:00Z",
+            ArrivalPort = "Dubai",
+            ArrivalTime = "2026-08-15T00:00:00Z",
+            Dimensions = "10x10",
+        };
+        dbContext.RequestedQuotes.Add(quote);
+
+        if (sourceFormKey is not null)
+        {
+            var definition = new FormDefinition { Key = sourceFormKey, Name = sourceFormKey };
+            var version = new FormVersion { FormDefinitionId = definition.Id, VersionNumber = 1, Status = FormVersionStatus.Published };
+            dbContext.FormDefinitions.Add(definition);
+            dbContext.FormVersions.Add(version);
+            dbContext.FormSubmissions.Add(new FormSubmission { FormVersionId = version.Id, CustomerId = customer.Id, RequestedQuoteId = quote.Id });
+        }
+
+        await dbContext.SaveChangesAsync();
+
+        var handler = new PromoteQuoteToCargoCommandHandler(dbContext, new PromoteQuoteToCargoCommandValidator());
+
+        var ex = await Assert.ThrowsAsync<Application.Exceptions.CargoException>(() =>
+            handler.HandleAsync(new PromoteQuoteToCargoCommand(quote.Id.ToString(), null, null, null)));
+        Assert.Contains("Only Cargo Brokerage requests", ex.Message);
+        Assert.Empty(dbContext.CargoListings);
+    }
+
+    [Theory]
+    [InlineData(FormDefinition.CargoRequestKey)]
+    [InlineData(null)]
+    public void IsCargoRequest_AcceptsCargoFormAndDirectQuotes(string? sourceFormKey)
+    {
+        Assert.True(RequestedQuote.IsCargoRequest("Dry Bulk", sourceFormKey));
+    }
 }

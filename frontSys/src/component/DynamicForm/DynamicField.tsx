@@ -3,6 +3,8 @@ import type { FormField } from '../../api/types';
 import type { FieldValue } from './conditionEngine';
 import FormSelect from '../Common/FormSelect';
 import PhoneInput from '../Common/PhoneInput';
+import RouteBuilder from '../Common/RouteBuilder';
+import type { RouteStopValue } from '../../api/types';
 import ports from '../../utils/ports.json';
 
 interface DynamicFieldProps {
@@ -149,6 +151,19 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
       );
       break;
 
+    case 'Route':
+      control = (
+        <RouteBuilder
+          stops={Array.isArray(value) ? (value as RouteStopValue[]) : []}
+          onChange={onChange}
+          etaType="date"
+          minEta={field.validation?.noPastDates ? todayMin('Date') : undefined}
+          maxStops={field.validation?.maxSelections ?? undefined}
+          invalid={Boolean(error)}
+        />
+      );
+      break;
+
     case 'Radio':
       control = (
         <div>
@@ -239,17 +254,47 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
       );
       break;
 
-    case 'MultiFile':
+    case 'MultiFile': {
+      // Each pick adds to the existing selection instead of replacing it, so files from
+      // different folders can be attached one after another.
+      const selected = Array.isArray(value) ? (value as File[]) : [];
       control = (
-        <input
-          id={inputId}
-          type="file"
-          multiple
-          className={`form-control${invalidClass}`}
-          onChange={(e) => onChange(e.target.files ? Array.from(e.target.files) : [])}
-        />
+        <>
+          <input
+            id={inputId}
+            type="file"
+            multiple
+            className={`form-control${invalidClass}`}
+            onChange={(e) => {
+              const picked = e.target.files ? Array.from(e.target.files) : [];
+              const isDuplicate = (f: File) =>
+                selected.some((s) => s.name === f.name && s.size === f.size && s.lastModified === f.lastModified);
+              onChange([...selected, ...picked.filter((f) => !isDuplicate(f))]);
+              e.target.value = ''; // lets the same file be re-added after removing it
+            }}
+          />
+          {selected.length > 0 && (
+            <ul className="list-group mt-2">
+              {selected.map((file, index) => (
+                <li
+                  key={[file.name, file.size, file.lastModified].join('-')}
+                  className="list-group-item d-flex justify-content-between align-items-center py-1"
+                >
+                  <span className="text-truncate me-2">{file.name}</span>
+                  <button
+                    type="button"
+                    className="btn-close"
+                    aria-label={`Remove ${file.name}`}
+                    onClick={() => { onChange(selected.filter((_, i) => i !== index)); }}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       );
       break;
+    }
 
     default: {
       const digitsOnly = field.validation?.digitsOnly ?? false;

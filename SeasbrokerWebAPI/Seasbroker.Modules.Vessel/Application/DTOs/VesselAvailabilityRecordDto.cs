@@ -36,4 +36,7 @@ public class VesselAvailabilityRecordDto
 
     [JsonPropertyName("isActive")]
     public bool IsActive { get; set; }
+
+    [JsonPropertyName("routeStops")]
+    public List<RouteStopDto> RouteStops { get; set; } = new();
 }

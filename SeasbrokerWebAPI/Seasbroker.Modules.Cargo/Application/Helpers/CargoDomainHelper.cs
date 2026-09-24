@@ -91,6 +91,20 @@ internal static class CargoDomainHelper
         }
     }
 
+    public static async Task<bool> IsCargoRequestAsync(
+        SeasbrokerDbContext dbContext,
+        RequestedQuote quote,
+        CancellationToken cancellationToken)
+    {
+        var sourceFormKey = await dbContext.FormSubmissions
+            .AsNoTracking()
+            .Where(s => s.RequestedQuoteId == quote.Id)
+            .Select(s => s.FormVersion.FormDefinition.Key)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return RequestedQuote.IsCargoRequest(quote.CargoType, sourceFormKey);
+    }
+
     public static async Task<CargoListing> GetCargoListingOrThrowAsync(
         SeasbrokerDbContext dbContext,
         Guid cargoListingId,
