@@ -107,6 +107,7 @@ export interface CargoListingRecord extends PocketBaseRecord {
   arrivalPort: string;
   arrivalTime: string;
   requestedQuote?: string;
+  customerName?: string;
   referenceNumber?: string;
   status: CargoStatus;
   priority: number;

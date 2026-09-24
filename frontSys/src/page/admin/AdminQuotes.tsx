@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import { cargoApi, quoteApi } from '../../api';
 import type { RequestedQuoteRecord } from '../../api/quote';
 import { formatApiError } from '../../utils/formatApiError';
@@ -105,9 +106,14 @@ const AdminQuotes: React.FC = () => {
                       <td>
                         <div className="admin-actions-cell">
                           {q.isPromoted ? (
-                            <span className="admin-badge" title={q.cargoListingId ? `Cargo listing ${q.cargoListingId}` : undefined}>
+                            <Link
+                              className="admin-badge"
+                              to={q.cargoListingId ? `/admin/cargo?listing=${q.cargoListingId}` : '/admin/cargo'}
+                              title="Open this request's cargo listing"
+                            >
                               <i className="ri-checkbox-circle-line" /> Promoted
-                            </span>
+                              {q.cargoListingReference ? ` · ${q.cargoListingReference}` : ''}
+                            </Link>
                           ) : !q.canPromote ? (
                             <span className="admin-result-text" title="Only Cargo Brokerage requests can become cargo listings">
                               Not cargo

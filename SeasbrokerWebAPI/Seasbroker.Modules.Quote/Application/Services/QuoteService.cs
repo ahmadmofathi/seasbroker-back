@@ -121,7 +121,7 @@ public class QuoteService : IQuoteService
         var promotedListingIdByQuoteId = await _dbContext.CargoListings
             .AsNoTracking()
             .Where(c => c.RequestedQuoteId != null && quoteIds.Contains(c.RequestedQuoteId.Value))
-            .ToDictionaryAsync(c => c.RequestedQuoteId!.Value, c => c.Id, cancellationToken);
+            .ToDictionaryAsync(c => c.RequestedQuoteId!.Value, c => (c.Id, c.ReferenceNumber), cancellationToken);
 
         var sourceFormKeys = await _dbContext.FormSubmissions
             .AsNoTracking()
@@ -141,7 +141,7 @@ public class QuoteService : IQuoteService
             Items = quotes
                 .Select(q => QuoteMapper.ToRecordDto(
                     q,
-                    promotedListingIdByQuoteId.TryGetValue(q.Id, out var listingId) ? listingId : (Guid?)null,
+                    promotedListingIdByQuoteId.TryGetValue(q.Id, out var listing) ? listing : null,
                     sourceFormKeyByQuoteId.GetValueOrDefault(q.Id)))
                 .ToList(),
         };
@@ -166,10 +166,10 @@ public class QuoteService : IQuoteService
             return null;
         }
 
-        var cargoListingId = await _dbContext.CargoListings
+        var cargoListing = await _dbContext.CargoListings
             .AsNoTracking()
             .Where(c => c.RequestedQuoteId == quoteId)
-            .Select(c => (Guid?)c.Id)
+            .Select(c => new { c.Id, c.ReferenceNumber })
             .FirstOrDefaultAsync(cancellationToken);
 
         var sourceFormKey = await _dbContext.FormSubmissions
@@ -178,7 +178,10 @@ public class QuoteService : IQuoteService
             .Select(s => s.FormVersion.FormDefinition.Key)
             .FirstOrDefaultAsync(cancellationToken);
 
-        return QuoteMapper.ToRecordDto(quote, cargoListingId, sourceFormKey);
+        return QuoteMapper.ToRecordDto(
+            quote,
+            cargoListing is null ? null : (cargoListing.Id, cargoListing.ReferenceNumber),
+            sourceFormKey);
     }
 
     private static DateTime ParseDateOrThrow(string value, string fieldName)

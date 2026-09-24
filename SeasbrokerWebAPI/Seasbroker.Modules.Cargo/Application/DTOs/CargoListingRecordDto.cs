@@ -25,6 +25,10 @@ public class CargoListingRecordDto
     [JsonPropertyName("requestedQuote")]
     public string? RequestedQuote { get; set; }
 
+    /// <summary>The customer's name, when the customer was loaded with the listing (list and view).</summary>
+    [JsonPropertyName("customerName")]
+    public string? CustomerName { get; set; }
+
     [JsonPropertyName("referenceNumber")]
     public string ReferenceNumber { get; set; } = string.Empty;
 

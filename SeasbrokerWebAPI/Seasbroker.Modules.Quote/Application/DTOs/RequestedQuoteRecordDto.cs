@@ -64,6 +64,9 @@ public class RequestedQuoteRecordDto
     [JsonPropertyName("cargoListingId")]
     public string? CargoListingId { get; set; }
 
+    [JsonPropertyName("cargoListingReference")]
+    public string? CargoListingReference { get; set; }
+
     /// <summary>False for Ship, Clearance and Contact requests, which carry no cargo to promote.</summary>
     [JsonPropertyName("canPromote")]
     public bool CanPromote { get; set; }

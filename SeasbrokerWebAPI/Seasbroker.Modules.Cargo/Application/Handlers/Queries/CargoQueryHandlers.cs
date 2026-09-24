@@ -47,6 +47,7 @@ public class GetCargoListingsQueryHandler
         var totalPages = totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)perPage);
 
         var listings = await listingsQuery
+            .Include(c => c.Customer)
             .OrderByDescending(c => c.Created)
             .Skip((page - 1) * perPage)
             .Take(perPage)
@@ -80,6 +81,7 @@ public class GetCargoListingByIdQueryHandler : IQueryHandler<GetCargoListingById
 
         var listing = await _dbContext.CargoListings
             .AsNoTracking()
+            .Include(c => c.Customer)
             .FirstOrDefaultAsync(c => c.Id == cargoListingId, cancellationToken);
 
         if (listing is null)

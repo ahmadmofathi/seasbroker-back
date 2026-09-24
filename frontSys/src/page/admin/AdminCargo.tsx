@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { cargoApi } from '../../api';
 import AdminModal from '../../component/admin/AdminModal';
 import { formatApiError } from '../../utils/formatApiError';
@@ -87,6 +88,10 @@ function toPayload(form: CargoForm): Partial<CargoListingRecord> {
 
 const AdminCargo: React.FC = () => {
   const [listings, setListings] = useState<CargoListingRecord[]>([]);
+  // Opened from a promoted request on Public Requests: highlight and scroll to that listing.
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get('listing');
+  const highlightRow = useRef<HTMLTableRowElement | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<CargoForm>(emptyForm);
@@ -106,6 +111,10 @@ const AdminCargo: React.FC = () => {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    highlightRow.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [listings, highlightId]);
 
   const openCreate = () => {
     setEditing(null);
@@ -190,6 +199,7 @@ const AdminCargo: React.FC = () => {
                 <thead>
                   <tr>
                     <th>Reference</th>
+                    <th>Customer</th>
                     <th>Type</th>
                     <th>Route</th>
                     <th>Weight</th>
@@ -199,10 +209,20 @@ const AdminCargo: React.FC = () => {
                 </thead>
                 <tbody>
                   {listings.map((c) => (
-                    <tr key={c.id}>
+                    <tr
+                      key={c.id}
+                      ref={c.id === highlightId ? highlightRow : undefined}
+                      style={c.id === highlightId ? { background: 'rgba(13, 110, 253, 0.08)', outline: '2px solid rgba(13, 110, 253, 0.35)' } : undefined}
+                    >
                       <td style={{ fontWeight: 500, color: 'var(--admin-navy)' }}>
                         {c.referenceNumber ?? c.id.slice(0, 8)}
+                        {c.requestedQuote && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--admin-muted)', fontWeight: 400 }}>
+                            From public request
+                          </div>
+                        )}
                       </td>
+                      <td>{c.customerName || '—'}</td>
                       <td>{c.cargoType}</td>
                       <td>
                         {c.departurePort} → {c.arrivalPort}

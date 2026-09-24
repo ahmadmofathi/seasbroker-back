@@ -17,6 +17,9 @@ public static class CargoMapper
             Updated = listing.Updated,
             Customer = listing.CustomerId.ToString(),
             RequestedQuote = listing.RequestedQuoteId?.ToString(),
+            CustomerName = listing.Customer is null
+                ? null
+                : $"{listing.Customer.FirstName} {listing.Customer.LastName}".Trim(),
             ReferenceNumber = listing.ReferenceNumber,
             CargoType = listing.CargoType,
             Weight = listing.Weight,

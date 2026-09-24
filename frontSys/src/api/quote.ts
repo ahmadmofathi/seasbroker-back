@@ -33,6 +33,7 @@ export interface RequestedQuoteRecord {
   /** False for Ship, Clearance and Contact requests - only cargo requests can become cargo listings. */
   canPromote?: boolean;
   cargoListingId?: string;
+  cargoListingReference?: string;
 }
 
 export async function submitQuote(data: QuoteRequest): Promise<QuoteSubmitResponse> {
