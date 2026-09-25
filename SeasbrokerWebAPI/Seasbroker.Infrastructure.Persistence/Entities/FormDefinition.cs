@@ -9,6 +9,9 @@ public class FormDefinition : AuditableEntity
     /// <summary>The Cargo Brokerage form - the only form whose requests can be promoted to a cargo listing.</summary>
     public const string CargoRequestKey = "request-quote";
 
+    /// <summary>The Ship Brokerage form - its requests can be added to the fleet as vessels.</summary>
+    public const string ShipRequestKey = "request-route";
+
     public string Key { get; set; } = string.Empty;
 
     public string Name { get; set; } = string.Empty;

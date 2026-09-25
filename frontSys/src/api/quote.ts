@@ -34,6 +34,10 @@ export interface RequestedQuoteRecord {
   canPromote?: boolean;
   cargoListingId?: string;
   cargoListingReference?: string;
+  /** Ship Brokerage requests are added to the fleet as vessels instead of becoming cargo. */
+  canPromoteToVessel?: boolean;
+  vesselId?: string;
+  vesselName?: string;
 }
 
 export async function submitQuote(data: QuoteRequest): Promise<QuoteSubmitResponse> {

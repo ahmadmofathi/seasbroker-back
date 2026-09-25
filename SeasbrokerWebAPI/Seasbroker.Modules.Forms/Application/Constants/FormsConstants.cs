@@ -11,7 +11,7 @@ public static class FormsConstants
     public static class FormKeys
     {
         public const string RequestQuote = Seasbroker.Infrastructure.Persistence.Entities.FormDefinition.CargoRequestKey;
-        public const string RequestRoute = "request-route";
+        public const string RequestRoute = Seasbroker.Infrastructure.Persistence.Entities.FormDefinition.ShipRequestKey;
         public const string RequestClearance = "request-clearance";
 
         public static readonly IReadOnlySet<string> All = new HashSet<string>

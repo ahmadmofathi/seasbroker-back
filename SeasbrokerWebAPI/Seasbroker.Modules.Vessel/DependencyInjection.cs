@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<CreateVesselAvailabilityCommand, VesselAvailabilityRecordDto>, CreateVesselAvailabilityCommandHandler>();
         services.AddScoped<ICommandHandler<UpdateVesselAvailabilityCommand, VesselAvailabilityRecordDto>, UpdateVesselAvailabilityCommandHandler>();
         services.AddScoped<ICommandHandler<DeactivateVesselAvailabilityCommand>, DeactivateVesselAvailabilityCommandHandler>();
+        services.AddScoped<ICommandHandler<PromoteQuoteToVesselCommand, PromoteQuoteToVesselResultDto>, PromoteQuoteToVesselCommandHandler>();
 
         services.AddScoped<IQueryHandler<GetVesselsQuery, PocketBaseListResponse<VesselRecordDto>>, GetVesselsQueryHandler>();
         services.AddScoped<IQueryHandler<GetVesselByIdQuery, VesselRecordDto>, GetVesselByIdQueryHandler>();

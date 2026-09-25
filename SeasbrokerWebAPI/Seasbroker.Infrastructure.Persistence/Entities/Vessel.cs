@@ -28,6 +28,11 @@ public class Vessel : AuditableEntity
 
     public Customer? Customer { get; set; }
 
+    /// <summary>The Ship Brokerage request this vessel was added to the fleet from, if any.</summary>
+    public Guid? RequestedQuoteId { get; set; }
+
+    public RequestedQuote? RequestedQuote { get; set; }
+
     public string? Notes { get; set; }
 
     public ICollection<VesselAvailability> Availabilities { get; set; } = new List<VesselAvailability>();

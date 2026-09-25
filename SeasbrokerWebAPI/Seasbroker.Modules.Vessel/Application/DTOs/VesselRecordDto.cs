@@ -57,4 +57,8 @@ public class VesselRecordDto
 
     [JsonPropertyName("notes")]
     public string? Notes { get; set; }
+
+    /// <summary>The Ship Brokerage request this vessel was added from, if any.</summary>
+    [JsonPropertyName("requestedQuote")]
+    public string? RequestedQuote { get; set; }
 }

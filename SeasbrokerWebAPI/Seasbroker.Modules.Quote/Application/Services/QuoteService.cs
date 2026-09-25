@@ -123,6 +123,11 @@ public class QuoteService : IQuoteService
             .Where(c => c.RequestedQuoteId != null && quoteIds.Contains(c.RequestedQuoteId.Value))
             .ToDictionaryAsync(c => c.RequestedQuoteId!.Value, c => (c.Id, c.ReferenceNumber), cancellationToken);
 
+        var vesselByQuoteId = await _dbContext.Vessels
+            .AsNoTracking()
+            .Where(v => v.RequestedQuoteId != null && quoteIds.Contains(v.RequestedQuoteId.Value))
+            .ToDictionaryAsync(v => v.RequestedQuoteId!.Value, v => (v.Id, v.Name), cancellationToken);
+
         var sourceFormKeys = await _dbContext.FormSubmissions
             .AsNoTracking()
             .Where(s => s.RequestedQuoteId != null && quoteIds.Contains(s.RequestedQuoteId.Value))
@@ -142,7 +147,8 @@ public class QuoteService : IQuoteService
                 .Select(q => QuoteMapper.ToRecordDto(
                     q,
                     promotedListingIdByQuoteId.TryGetValue(q.Id, out var listing) ? listing : null,
-                    sourceFormKeyByQuoteId.GetValueOrDefault(q.Id)))
+                    sourceFormKeyByQuoteId.GetValueOrDefault(q.Id),
+                    vesselByQuoteId.TryGetValue(q.Id, out var vessel) ? vessel : null))
                 .ToList(),
         };
     }
@@ -178,10 +184,17 @@ public class QuoteService : IQuoteService
             .Select(s => s.FormVersion.FormDefinition.Key)
             .FirstOrDefaultAsync(cancellationToken);
 
+        var vessel = await _dbContext.Vessels
+            .AsNoTracking()
+            .Where(v => v.RequestedQuoteId == quoteId)
+            .Select(v => new { v.Id, v.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+
         return QuoteMapper.ToRecordDto(
             quote,
             cargoListing is null ? null : (cargoListing.Id, cargoListing.ReferenceNumber),
-            sourceFormKey);
+            sourceFormKey,
+            vessel is null ? null : (vessel.Id, vessel.Name));
     }
 
     private static DateTime ParseDateOrThrow(string value, string fieldName)

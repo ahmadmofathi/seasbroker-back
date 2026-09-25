@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Seasbroker.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using Seasbroker.Infrastructure.Persistence;
 namespace Seasbroker.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(SeasbrokerDbContext))]
-    partial class SeasbrokerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260925133331_AddVesselRequestedQuote")]
+    partial class AddVesselRequestedQuote
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

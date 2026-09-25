@@ -67,6 +67,16 @@ public class RequestedQuoteRecordDto
     [JsonPropertyName("cargoListingReference")]
     public string? CargoListingReference { get; set; }
 
+    /// <summary>True for Ship Brokerage requests, which are added to the fleet as vessels.</summary>
+    [JsonPropertyName("canPromoteToVessel")]
+    public bool CanPromoteToVessel { get; set; }
+
+    [JsonPropertyName("vesselId")]
+    public string? VesselId { get; set; }
+
+    [JsonPropertyName("vesselName")]
+    public string? VesselName { get; set; }
+
     /// <summary>False for Ship, Clearance and Contact requests, which carry no cargo to promote.</summary>
     [JsonPropertyName("canPromote")]
     public bool CanPromote { get; set; }

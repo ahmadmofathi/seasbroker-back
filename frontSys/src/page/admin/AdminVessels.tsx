@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { vesselsApi } from '../../api';
 import AdminModal from '../../component/admin/AdminModal';
 import VesselAvailabilityModal from '../../component/admin/VesselAvailabilityModal';
@@ -81,6 +82,10 @@ const AdminVessels: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [availabilityVessel, setAvailabilityVessel] = useState<VesselRecord | null>(null);
   const { error: showError, confirm, success } = useAlert();
+  // Opened from a promoted Ship Brokerage request: highlight and scroll to that vessel.
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get('vessel');
+  const highlightRow = useRef<HTMLTableRowElement | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -94,6 +99,10 @@ const AdminVessels: React.FC = () => {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    highlightRow.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [vessels, highlightId]);
 
   const openCreate = () => {
     setEditing(null);
@@ -193,8 +202,19 @@ const AdminVessels: React.FC = () => {
                 </thead>
                 <tbody>
                   {vessels.map((v) => (
-                    <tr key={v.id}>
-                      <td style={{ fontWeight: 500, color: 'var(--admin-navy)' }}>{v.name}</td>
+                    <tr
+                      key={v.id}
+                      ref={v.id === highlightId ? highlightRow : undefined}
+                      style={v.id === highlightId ? { background: 'rgba(13, 110, 253, 0.08)', outline: '2px solid rgba(13, 110, 253, 0.35)' } : undefined}
+                    >
+                      <td style={{ fontWeight: 500, color: 'var(--admin-navy)' }}>
+                        {v.name}
+                        {v.requestedQuote && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--admin-muted)', fontWeight: 400 }}>
+                            From public request
+                          </div>
+                        )}
+                      </td>
                       <td>{v.imoNumber}</td>
                       <td>{v.vesselType}</td>
                       <td>{v.dwt?.toLocaleString()}</td>

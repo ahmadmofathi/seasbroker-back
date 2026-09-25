@@ -28,6 +28,7 @@ public static class VesselMapper
             Status = vessel.Status,
             Customer = vessel.CustomerId?.ToString(),
             Notes = vessel.Notes,
+            RequestedQuote = vessel.RequestedQuoteId?.ToString(),
         };
     }
 

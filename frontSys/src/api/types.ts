@@ -137,6 +137,15 @@ export interface VesselRecord extends PocketBaseRecord {
   status: VesselStatus;
   customer?: string;
   notes?: string;
+  /** The Ship Brokerage request this vessel was added from, if any. */
+  requestedQuote?: string;
+}
+
+export interface PromoteToVesselResult {
+  vessel: VesselRecord;
+  availability: VesselAvailabilityRecord | null;
+  availabilityNote?: string | null;
+  cancelledCargoListingReference?: string | null;
 }
 
 export interface VesselAvailabilityRecord extends PocketBaseRecord {

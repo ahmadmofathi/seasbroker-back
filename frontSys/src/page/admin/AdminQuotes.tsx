@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { cargoApi, quoteApi } from '../../api';
+import { cargoApi, quoteApi, vesselsApi } from '../../api';
 import type { RequestedQuoteRecord } from '../../api/quote';
 import { formatApiError } from '../../utils/formatApiError';
 import { useAlert } from '../../context/AlertContext';
@@ -39,6 +39,28 @@ const AdminQuotes: React.FC = () => {
       });
 
       success('Request promoted to a cargo listing. Open Cargo Listings to see it.');
+      load();
+    } catch (e) {
+      showError(formatApiError(e));
+    } finally {
+      setPromotingId(null);
+    }
+  };
+
+  const promoteToVessel = async (quote: RequestedQuoteRecord) => {
+    setPromotingId(quote.id);
+    try {
+      const result = await vesselsApi.promoteFromQuote(quote.id);
+      const notes = [
+        `"${result.vessel.name}" added to the fleet.`,
+        result.availability
+          ? 'Its availability window was created, so matching can use it.'
+          : result.availabilityNote ?? '',
+        result.cancelledCargoListingReference
+          ? `The cargo listing ${result.cancelledCargoListingReference} made from this request by mistake was cancelled.`
+          : '',
+      ];
+      success(notes.filter(Boolean).join(' '));
       load();
     } catch (e) {
       showError(formatApiError(e));
@@ -105,7 +127,26 @@ const AdminQuotes: React.FC = () => {
                       </td>
                       <td>
                         <div className="admin-actions-cell">
-                          {q.isPromoted ? (
+                          {q.vesselId ? (
+                            <Link
+                              className="admin-badge"
+                              to={`/admin/vessels?vessel=${q.vesselId}`}
+                              title="Open this vessel in the fleet"
+                            >
+                              <i className="ri-ship-line" /> In fleet
+                              {q.vesselName ? ` · ${q.vesselName}` : ''}
+                            </Link>
+                          ) : q.canPromoteToVessel ? (
+                            <button
+                              type="button"
+                              className="admin-btn-sm primary"
+                              disabled={promotingId === q.id}
+                              title={q.cargoListingId ? 'This ship request was promoted to cargo by mistake - this adds it to the fleet and cancels that listing' : undefined}
+                              onClick={() => void promoteToVessel(q)}
+                            >
+                              {promotingId === q.id ? 'Adding…' : 'Promote to Vessel'}
+                            </button>
+                          ) : q.isPromoted ? (
                             <Link
                               className="admin-badge"
                               to={q.cargoListingId ? `/admin/cargo?listing=${q.cargoListingId}` : '/admin/cargo'}

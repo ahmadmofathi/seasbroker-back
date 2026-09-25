@@ -3,9 +3,18 @@ import {
   adminDelete,
   adminGetOne,
   adminList,
+  adminRequest,
   adminUpdate,
 } from './adminClient';
-import type { VesselAvailabilityRecord, VesselRecord } from './types';
+import type { PromoteToVesselResult, VesselAvailabilityRecord, VesselRecord } from './types';
+
+/** Adds the vessel from a Ship Brokerage request to the fleet, with an availability window. */
+export async function promoteFromQuote(requestedQuoteId: string): Promise<PromoteToVesselResult> {
+  return adminRequest<PromoteToVesselResult>('/api/vessels/promote-from-quote', {
+    method: 'POST',
+    body: { requestedQuoteId },
+  });
+}
 
 export async function listVessels(
   filter?: string,

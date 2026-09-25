@@ -69,6 +69,16 @@ public class VesselConfiguration : IEntityTypeConfiguration<Vessel>
             .HasFilter("[ImoNumber] IS NOT NULL")
             .HasDatabaseName("IX_vessels_ImoNumber");
 
+        builder.HasIndex(v => v.RequestedQuoteId)
+            .IsUnique()
+            .HasFilter("[RequestedQuoteId] IS NOT NULL")
+            .HasDatabaseName("IX_vessels_RequestedQuoteId");
+
+        builder.HasOne(v => v.RequestedQuote)
+            .WithMany()
+            .HasForeignKey(v => v.RequestedQuoteId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasOne(v => v.Customer)
             .WithMany()
             .HasForeignKey(v => v.CustomerId)
