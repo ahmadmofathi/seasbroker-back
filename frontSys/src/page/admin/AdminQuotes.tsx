@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { cargoApi, quoteApi, vesselsApi } from '../../api';
 import type { RequestedQuoteRecord } from '../../api/quote';
+import type { PromoteFromQuoteBody } from '../../api/types';
+import PromoteCargoModal from '../../component/admin/PromoteCargoModal';
 import { formatApiError } from '../../utils/formatApiError';
 import { useAlert } from '../../context/AlertContext';
 
@@ -29,16 +31,16 @@ const AdminQuotes: React.FC = () => {
     load();
   }, []);
 
-  const promote = async (quote: RequestedQuoteRecord) => {
-    setPromotingId(quote.id);
+  // The request being reviewed in the promote dialog, if it's open.
+  const [reviewing, setReviewing] = useState<RequestedQuoteRecord | null>(null);
+
+  const promote = async (body: PromoteFromQuoteBody) => {
+    setPromotingId(body.requestedQuoteId);
     try {
-      await cargoApi.promoteFromQuote({
-        requestedQuoteId: quote.id,
-        status: 'Open',
-        priority: 3,
-      });
+      await cargoApi.promoteFromQuote(body);
 
       success('Request promoted to a cargo listing. Open Cargo Listings to see it.');
+      setReviewing(null);
       load();
     } catch (e) {
       showError(formatApiError(e));
@@ -121,7 +123,7 @@ const AdminQuotes: React.FC = () => {
                       <td>
                         {q.departurePort} → {q.arrivalPort}
                       </td>
-                      <td>{q.weight} kg</td>
+                      <td>{q.weight.toLocaleString()} MT</td>
                       <td style={{ maxWidth: 240, fontSize: '0.8rem', color: 'var(--admin-muted)' }}>
                         {q.additionalInfo || q.dimensions}
                       </td>
@@ -164,7 +166,7 @@ const AdminQuotes: React.FC = () => {
                               type="button"
                               className="admin-btn-sm primary"
                               disabled={promotingId === q.id}
-                              onClick={() => void promote(q)}
+                              onClick={() => { setReviewing(q); }}
                             >
                               {promotingId === q.id ? 'Promoting…' : 'Promote to Cargo'}
                             </button>
@@ -186,6 +188,14 @@ const AdminQuotes: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+      {reviewing && (
+        <PromoteCargoModal
+          quote={reviewing}
+          saving={promotingId === reviewing.id}
+          onClose={() => { setReviewing(null); }}
+          onPromote={promote}
+        />
       )}
     </>
   );

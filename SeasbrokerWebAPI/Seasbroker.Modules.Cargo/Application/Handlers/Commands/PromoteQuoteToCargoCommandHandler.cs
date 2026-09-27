@@ -55,8 +55,10 @@ public class PromoteQuoteToCargoCommandHandler : ICommandHandler<PromoteQuoteToC
                 StatusCodes.Status400BadRequest);
         }
 
-        var departureTime = QuoteDateParser.ParseOrThrow(quote.DepartureTime, "departureTime");
-        var arrivalTime = QuoteDateParser.ParseOrThrow(quote.ArrivalTime, "arrivalTime");
+        var edits = command.Overrides ?? new PromoteQuoteOverrides();
+
+        var departureTime = edits.DepartureTime ?? QuoteDateParser.ParseOrThrow(quote.DepartureTime, "departureTime");
+        var arrivalTime = edits.ArrivalTime ?? QuoteDateParser.ParseOrThrow(quote.ArrivalTime, "arrivalTime");
         CargoDomainHelper.ValidateDateRange(departureTime, arrivalTime);
 
         var referenceNumber = string.IsNullOrWhiteSpace(command.ReferenceNumber)
@@ -70,14 +72,14 @@ public class PromoteQuoteToCargoCommandHandler : ICommandHandler<PromoteQuoteToC
             CustomerId = quote.CustomerId,
             RequestedQuoteId = quote.Id,
             ReferenceNumber = referenceNumber,
-            CargoType = quote.CargoType,
-            Weight = quote.Weight,
-            Dimensions = quote.Dimensions,
-            DeparturePort = quote.DeparturePort,
+            CargoType = edits.CargoType?.Trim() ?? quote.CargoType,
+            Weight = edits.Weight ?? quote.Weight,
+            Dimensions = edits.Dimensions?.Trim() ?? quote.Dimensions,
+            DeparturePort = edits.DeparturePort?.Trim() ?? quote.DeparturePort,
             DepartureTime = departureTime,
-            ArrivalPort = quote.ArrivalPort,
+            ArrivalPort = edits.ArrivalPort?.Trim() ?? quote.ArrivalPort,
             ArrivalTime = arrivalTime,
-            AdditionalInfo = quote.AdditionalInfo,
+            AdditionalInfo = edits.AdditionalInfo ?? quote.AdditionalInfo,
             Status = CargoDomainHelper.ResolveStatus(command.Status),
             Priority = CargoDomainHelper.ResolvePriority(command.Priority),
         };

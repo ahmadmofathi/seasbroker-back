@@ -1,5 +1,13 @@
 /** Cargo types used across quotes, listings, and matching rules */
 export const ALLOWED_CARGO_TYPES = [
+  // as the public Cargo Brokerage form submits them
+  'Dry Bulk',
+  'General & Breakbulk Cargo',
+  'Project & Heavy-Lift Cargo',
+  'Containerized Cargo',
+  'Liquid Bulk',
+  'Refrigerated & Perishable Cargo',
+  // older / admin-entered types
   'Bulk',
   'Container',
   'RoRo',

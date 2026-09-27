@@ -217,4 +217,74 @@ public class CargoBusinessRulesTests
     {
         Assert.True(RequestedQuote.IsCargoRequest("Dry Bulk", sourceFormKey));
     }
+
+    [Fact]
+    public async Task PromoteQuote_UsesEditedValues_AndLeavesTheRequestUntouched()
+    {
+        var options = new DbContextOptionsBuilder<SeasbrokerDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        await using var dbContext = new SeasbrokerDbContext(options);
+
+        var customer = new Customer { Email = "edit@test.com", PhoneNumber = "1", FirstName = "Edit", LastName = "Me" };
+        var quote = new RequestedQuote
+        {
+            CustomerId = customer.Id,
+            CargoType = "Dry Bulk",
+            Weight = 500,
+            DeparturePort = "Hamburg",
+            DepartureTime = "2026-11-01T00:00:00Z",
+            ArrivalPort = "Dubai",
+            ArrivalTime = "2026-11-15T00:00:00Z",
+            Dimensions = "10x10",
+        };
+        dbContext.AddRange(customer, quote);
+        await dbContext.SaveChangesAsync();
+
+        var edits = new PromoteQuoteOverrides(
+            Weight: 750,
+            ArrivalPort: "Jebel Ali - United Arab Emirates",
+            ArrivalTime: new DateTime(2026, 11, 20, 0, 0, 0, DateTimeKind.Utc));
+        var listing = await new PromoteQuoteToCargoCommandHandler(dbContext, new PromoteQuoteToCargoCommandValidator())
+            .HandleAsync(new PromoteQuoteToCargoCommand(quote.Id.ToString(), null, null, null, edits));
+
+        Assert.Equal(750, listing.Weight);
+        Assert.Equal("Jebel Ali - United Arab Emirates", listing.ArrivalPort);
+        Assert.Equal("Hamburg", listing.DeparturePort); // not edited, taken from the request
+        Assert.Equal("Dry Bulk", listing.CargoType);
+
+        var original = await dbContext.RequestedQuotes.AsNoTracking().SingleAsync();
+        Assert.Equal(500, original.Weight);
+        Assert.Equal("Dubai", original.ArrivalPort);
+    }
+
+    [Fact]
+    public async Task PromoteQuote_RejectsEditedArrivalBeforeDeparture()
+    {
+        var options = new DbContextOptionsBuilder<SeasbrokerDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        await using var dbContext = new SeasbrokerDbContext(options);
+
+        var customer = new Customer { Email = "bad@test.com", PhoneNumber = "1", FirstName = "Bad", LastName = "Dates" };
+        var quote = new RequestedQuote
+        {
+            CustomerId = customer.Id,
+            CargoType = "Dry Bulk",
+            Weight = 500,
+            DeparturePort = "Hamburg",
+            DepartureTime = "2026-11-01T00:00:00Z",
+            ArrivalPort = "Dubai",
+            ArrivalTime = "2026-11-15T00:00:00Z",
+            Dimensions = "10x10",
+        };
+        dbContext.AddRange(customer, quote);
+        await dbContext.SaveChangesAsync();
+
+        var edits = new PromoteQuoteOverrides(ArrivalTime: new DateTime(2026, 10, 1, 0, 0, 0, DateTimeKind.Utc));
+        await Assert.ThrowsAsync<Application.Exceptions.CargoException>(() =>
+            new PromoteQuoteToCargoCommandHandler(dbContext, new PromoteQuoteToCargoCommandValidator())
+                .HandleAsync(new PromoteQuoteToCargoCommand(quote.Id.ToString(), null, null, null, edits)));
+        Assert.Empty(dbContext.CargoListings);
+    }
 }

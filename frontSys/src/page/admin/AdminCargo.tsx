@@ -227,7 +227,7 @@ const AdminCargo: React.FC = () => {
                       <td>
                         {c.departurePort} → {c.arrivalPort}
                       </td>
-                      <td>{c.weight} kg</td>
+                      <td>{c.weight.toLocaleString()} MT</td>
                       <td>
                         <span className="admin-badge">{c.status}</span>
                       </td>
@@ -311,7 +311,7 @@ const AdminCargo: React.FC = () => {
               </select>
             </div>
             <div className="admin-field">
-              <label htmlFor="c-weight">Weight (kg)</label>
+              <label htmlFor="c-weight">Weight (MT)</label>
               <input id="c-weight" className="admin-input" type="number" min="0" required value={form.weight} onChange={(e) => setField('weight', e.target.value)} />
             </div>
             <div className="admin-field">

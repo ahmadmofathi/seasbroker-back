@@ -116,5 +116,15 @@ public class PromoteQuoteToCargoCommandValidator : AbstractValidator<PromoteQuot
         RuleFor(x => x.ReferenceNumber)
             .MaximumLength(50)
             .When(x => !string.IsNullOrWhiteSpace(x.ReferenceNumber));
+
+        When(x => x.Overrides is not null, () =>
+        {
+            RuleFor(x => x.Overrides!.CargoType).NotEmpty().MaximumLength(100).When(x => x.Overrides!.CargoType is not null);
+            RuleFor(x => x.Overrides!.Weight).GreaterThan(0).When(x => x.Overrides!.Weight is not null);
+            RuleFor(x => x.Overrides!.Dimensions).MaximumLength(200).When(x => x.Overrides!.Dimensions is not null);
+            RuleFor(x => x.Overrides!.DeparturePort).MinimumLength(2).MaximumLength(200).When(x => x.Overrides!.DeparturePort is not null);
+            RuleFor(x => x.Overrides!.ArrivalPort).MinimumLength(2).MaximumLength(200).When(x => x.Overrides!.ArrivalPort is not null);
+            RuleFor(x => x.Overrides!.AdditionalInfo).MaximumLength(2000).When(x => x.Overrides!.AdditionalInfo is not null);
+        });
     }
 }

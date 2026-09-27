@@ -45,7 +45,16 @@ public class CargoActionsController : ControllerBase
                 request.RequestedQuoteId,
                 request.ReferenceNumber,
                 request.Status,
-                request.Priority),
+                request.Priority,
+                new PromoteQuoteOverrides(
+                    request.CargoType,
+                    request.Weight,
+                    request.Dimensions,
+                    request.DeparturePort,
+                    request.DepartureTime,
+                    request.ArrivalPort,
+                    request.ArrivalTime,
+                    request.AdditionalInfo)),
             cancellationToken);
 
         return Ok(listing);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { cargoApi, matchingApi, vesselsApi } from '../../api';
 import AdminModal from '../../component/admin/AdminModal';
 import { formatApiError } from '../../utils/formatApiError';
@@ -9,13 +9,19 @@ function toMatchList(value: unknown): MatchRecord[] {
   return Array.isArray(value) ? value : [];
 }
 
+const muted: React.CSSProperties = { fontSize: '0.75rem', color: 'var(--admin-muted)' };
+
 const MatchTable = ({
   title,
   data,
+  cargoById,
+  vesselById,
   renderActions,
 }: {
   title: string;
   data: MatchRecord[];
+  cargoById: Map<string, CargoListingRecord>;
+  vesselById: Map<string, VesselRecord>;
   renderActions?: (m: MatchRecord) => React.ReactNode;
 }) => {
   const rows = toMatchList(data);
@@ -48,8 +54,12 @@ const MatchTable = ({
                     <span className="admin-badge">{m.status}</span>
                   </td>
                   <td>{m.source}</td>
-                  <td>{m.cargoListingId?.slice(0, 8)}</td>
-                  <td>{m.vesselId?.slice(0, 8)}</td>
+                  <td>
+                    <CargoCell id={m.cargoListingId} cargo={cargoById.get(m.cargoListingId)} />
+                  </td>
+                  <td>
+                    <VesselCell id={m.vesselId} vessel={vesselById.get(m.vesselId)} />
+                  </td>
                   {renderActions && (
                     <td>
                       <div className="admin-actions-cell">{renderActions(m)}</div>
@@ -70,12 +80,43 @@ const MatchTable = ({
   );
 };
 
+/** Reference and cargo type, with route and customer underneath - instead of a bare id. */
+const CargoCell = ({ id, cargo }: { id?: string; cargo?: CargoListingRecord }) => {
+  if (!cargo) return <span title={id}>{id?.slice(0, 8) ?? '—'}</span>;
+  return (
+    <div title={id}>
+      <div style={{ fontWeight: 500, color: 'var(--admin-navy)' }}>
+        {cargo.referenceNumber || cargo.id.slice(0, 8)} · {cargo.cargoType}
+      </div>
+      <div style={muted}>
+        {cargo.departurePort} → {cargo.arrivalPort}
+        {cargo.customerName ? ` · ${cargo.customerName}` : ''}
+      </div>
+    </div>
+  );
+};
+
+const VesselCell = ({ id, vessel }: { id?: string; vessel?: VesselRecord }) => {
+  if (!vessel) return <span title={id}>{id?.slice(0, 8) ?? '—'}</span>;
+  return (
+    <div title={id}>
+      <div style={{ fontWeight: 500, color: 'var(--admin-navy)' }}>{vessel.name}</div>
+      <div style={muted}>
+        {vessel.vesselType} · {vessel.dwt.toLocaleString()} MT DWT
+        {vessel.imoNumber ? ` · IMO ${vessel.imoNumber}` : ''}
+      </div>
+    </div>
+  );
+};
+
 const AdminMatching: React.FC = () => {
   const [pending, setPending] = useState<MatchRecord[]>([]);
   const [approved, setApproved] = useState<MatchRecord[]>([]);
   const [all, setAll] = useState<MatchRecord[]>([]);
   const [cargoOptions, setCargoOptions] = useState<CargoListingRecord[]>([]);
   const [vesselOptions, setVesselOptions] = useState<VesselRecord[]>([]);
+  const cargoById = useMemo(() => new Map(cargoOptions.map((c) => [c.id, c])), [cargoOptions]);
+  const vesselById = useMemo(() => new Map(vesselOptions.map((v) => [v.id, v])), [vesselOptions]);
   const [rules, setRules] = useState<MatchingRuleRecord[]>([]);
   const [ruleWeights, setRuleWeights] = useState<Record<string, string>>({});
   const [savingRuleId, setSavingRuleId] = useState<string | null>(null);
@@ -98,8 +139,8 @@ const AdminMatching: React.FC = () => {
       matchingApi.listPendingApproval(),
       matchingApi.listApprovedMatches(),
       matchingApi.listMatches(),
-      cargoApi.listCargoListings(),
-      vesselsApi.listVessels(),
+      cargoApi.listCargoListings(undefined, 1, 200),
+      vesselsApi.listVessels(undefined, 1, 200),
       matchingApi.listMatchingRules(),
     ])
       .then((results) => {
@@ -315,6 +356,8 @@ const AdminMatching: React.FC = () => {
           </div>
 
           <MatchTable
+            cargoById={cargoById}
+            vesselById={vesselById}
             title="Pending Approval"
             data={pending}
             renderActions={(m) => (
@@ -332,6 +375,8 @@ const AdminMatching: React.FC = () => {
             )}
           />
           <MatchTable
+            cargoById={cargoById}
+            vesselById={vesselById}
             title="Approved"
             data={approved}
             renderActions={(m) => (
@@ -345,7 +390,7 @@ const AdminMatching: React.FC = () => {
               </>
             )}
           />
-          <MatchTable title="All Matches" data={all} />
+          <MatchTable title="All Matches" data={all} cargoById={cargoById} vesselById={vesselById} />
         </>
       )}
 

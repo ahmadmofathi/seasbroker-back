@@ -119,6 +119,15 @@ export interface PromoteFromQuoteBody {
   referenceNumber?: string;
   status?: CargoStatus;
   priority?: number;
+  /** Corrections made before promoting; anything left out keeps the request's value. */
+  cargoType?: string;
+  weight?: number;
+  dimensions?: string;
+  departurePort?: string;
+  departureTime?: string;
+  arrivalPort?: string;
+  arrivalTime?: string;
+  additionalInfo?: string;
 }
 
 export type VesselStatus = 'Active' | 'Inactive' | 'Maintenance';
