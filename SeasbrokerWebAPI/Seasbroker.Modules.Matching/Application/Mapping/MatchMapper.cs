@@ -25,6 +25,14 @@ public static class MatchMapper
             ScoreBreakdown = match.ScoreBreakdown,
             ExpiresAt = match.ExpiresAt,
             ChatId = match.ChatId?.ToString(),
+            CargoReference = match.CargoListing?.ReferenceNumber,
+            CargoType = match.CargoListing?.CargoType,
+            CargoRoute = match.CargoListing is { } cargo ? $"{cargo.DeparturePort} → {cargo.ArrivalPort}" : null,
+            CustomerName = match.CargoListing?.Customer is { } customer ? $"{customer.FirstName} {customer.LastName}".Trim() : null,
+            VesselName = match.Vessel?.Name,
+            VesselType = match.Vessel?.VesselType,
+            VesselDwt = match.Vessel?.Dwt,
+            VesselImo = match.Vessel?.ImoNumber,
         };
     }
 

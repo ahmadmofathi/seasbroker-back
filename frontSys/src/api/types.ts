@@ -182,6 +182,15 @@ export type MatchSource = 'Automatic' | 'Manual';
 export interface MatchRecord extends PocketBaseRecord {
   cargoListingId: string;
   vesselId: string;
+  /** Sent by the API with every match so the admin sees names instead of ids. */
+  cargoReference?: string | null;
+  cargoType?: string | null;
+  cargoRoute?: string | null;
+  customerName?: string | null;
+  vesselName?: string | null;
+  vesselType?: string | null;
+  vesselDwt?: number | null;
+  vesselImo?: string | null;
   score: number;
   status: MatchStatus;
   source: MatchSource;

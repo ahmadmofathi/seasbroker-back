@@ -390,6 +390,8 @@ public class MatchApprovalQueryService : IMatchApprovalQueryService
 
         var matchesQuery = _dbContext.Matches
             .AsNoTracking()
+            .Include(m => m.CargoListing).ThenInclude(c => c.Customer)
+            .Include(m => m.Vessel)
             .Where(m => m.Status == status);
 
         var totalItems = await matchesQuery.CountAsync(cancellationToken);

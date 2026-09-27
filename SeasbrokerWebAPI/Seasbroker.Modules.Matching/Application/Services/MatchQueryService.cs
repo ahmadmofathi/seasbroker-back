@@ -25,7 +25,10 @@ public class MatchQueryService : IMatchQueryService
         var page = query.Page < 1 ? 1 : query.Page;
         var perPage = query.PerPage < 1 ? 50 : Math.Min(query.PerPage, 200);
 
-        var matchesQuery = _dbContext.Matches.AsNoTracking();
+        IQueryable<global::Seasbroker.Infrastructure.Persistence.Entities.Match> matchesQuery = _dbContext.Matches
+            .AsNoTracking()
+            .Include(m => m.CargoListing).ThenInclude(c => c.Customer)
+            .Include(m => m.Vessel);
 
         if (!string.IsNullOrWhiteSpace(query.Status))
         {
@@ -70,6 +73,8 @@ public class MatchQueryService : IMatchQueryService
 
         var match = await _dbContext.Matches
             .AsNoTracking()
+            .Include(m => m.CargoListing).ThenInclude(c => c.Customer)
+            .Include(m => m.Vessel)
             .FirstOrDefaultAsync(m => m.Id == parsedMatchId, cancellationToken);
 
         if (match is null)
@@ -88,6 +93,8 @@ public class MatchQueryService : IMatchQueryService
 
         var matches = await _dbContext.Matches
             .AsNoTracking()
+            .Include(m => m.CargoListing).ThenInclude(c => c.Customer)
+            .Include(m => m.Vessel)
             .Where(m => m.CargoListingId == parsedCargoId)
             .OrderByDescending(m => m.Score)
             .ToListAsync(cancellationToken);
@@ -103,6 +110,8 @@ public class MatchQueryService : IMatchQueryService
 
         var matches = await _dbContext.Matches
             .AsNoTracking()
+            .Include(m => m.CargoListing).ThenInclude(c => c.Customer)
+            .Include(m => m.Vessel)
             .Where(m => m.VesselId == parsedVesselId)
             .OrderByDescending(m => m.Score)
             .ToListAsync(cancellationToken);

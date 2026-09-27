@@ -55,10 +55,10 @@ const MatchTable = ({
                   </td>
                   <td>{m.source}</td>
                   <td>
-                    <CargoCell id={m.cargoListingId} cargo={cargoById.get(m.cargoListingId)} />
+                    <CargoCell match={m} cargo={cargoById.get(m.cargoListingId)} />
                   </td>
                   <td>
-                    <VesselCell id={m.vesselId} vessel={vesselById.get(m.vesselId)} />
+                    <VesselCell match={m} vessel={vesselById.get(m.vesselId)} />
                   </td>
                   {renderActions && (
                     <td>
@@ -80,30 +80,43 @@ const MatchTable = ({
   );
 };
 
-/** Reference and cargo type, with route and customer underneath - instead of a bare id. */
-const CargoCell = ({ id, cargo }: { id?: string; cargo?: CargoListingRecord }) => {
-  if (!cargo) return <span title={id}>{id?.slice(0, 8) ?? '—'}</span>;
+/**
+ * Reference and cargo type, with route and customer underneath - instead of a bare id. Uses the
+ * details the API sends with the match, then the loaded cargo list, and only then the id.
+ */
+const CargoCell = ({ match, cargo }: { match: MatchRecord; cargo?: CargoListingRecord }) => {
+  const reference = match.cargoReference ?? cargo?.referenceNumber;
+  const type = match.cargoType ?? cargo?.cargoType;
+  const route = match.cargoRoute ?? (cargo ? `${cargo.departurePort} → ${cargo.arrivalPort}` : null);
+  const customer = match.customerName ?? cargo?.customerName;
+  if (!reference && !type) return <span title={match.cargoListingId}>{match.cargoListingId.slice(0, 8)}</span>;
   return (
-    <div title={id}>
+    <div title={match.cargoListingId}>
       <div style={{ fontWeight: 500, color: 'var(--admin-navy)' }}>
-        {cargo.referenceNumber || cargo.id.slice(0, 8)} · {cargo.cargoType}
+        {reference ?? match.cargoListingId.slice(0, 8)}
+        {type ? ` · ${type}` : ''}
       </div>
       <div style={muted}>
-        {cargo.departurePort} → {cargo.arrivalPort}
-        {cargo.customerName ? ` · ${cargo.customerName}` : ''}
+        {route}
+        {customer ? ` · ${customer}` : ''}
       </div>
     </div>
   );
 };
 
-const VesselCell = ({ id, vessel }: { id?: string; vessel?: VesselRecord }) => {
-  if (!vessel) return <span title={id}>{id?.slice(0, 8) ?? '—'}</span>;
+const VesselCell = ({ match, vessel }: { match: MatchRecord; vessel?: VesselRecord }) => {
+  const name = match.vesselName ?? vessel?.name;
+  const type = match.vesselType ?? vessel?.vesselType;
+  const dwt = match.vesselDwt ?? vessel?.dwt;
+  const imo = match.vesselImo ?? vessel?.imoNumber;
+  if (!name) return <span title={match.vesselId}>{match.vesselId.slice(0, 8)}</span>;
   return (
-    <div title={id}>
-      <div style={{ fontWeight: 500, color: 'var(--admin-navy)' }}>{vessel.name}</div>
+    <div title={match.vesselId}>
+      <div style={{ fontWeight: 500, color: 'var(--admin-navy)' }}>{name}</div>
       <div style={muted}>
-        {vessel.vesselType} · {vessel.dwt.toLocaleString()} MT DWT
-        {vessel.imoNumber ? ` · IMO ${vessel.imoNumber}` : ''}
+        {[type, dwt != null ? `${dwt.toLocaleString()} MT DWT` : null, imo ? `IMO ${imo}` : null]
+          .filter(Boolean)
+          .join(' · ')}
       </div>
     </div>
   );

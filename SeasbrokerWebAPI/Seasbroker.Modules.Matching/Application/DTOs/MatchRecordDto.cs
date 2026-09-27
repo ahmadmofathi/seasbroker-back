@@ -45,4 +45,31 @@ public class MatchRecordDto
 
     [JsonPropertyName("chatId")]
     public string? ChatId { get; set; }
+
+    // Who the match is between, so the admin sees names instead of ids. Filled when the query
+    // loads the cargo listing / vessel (the match lists do); null otherwise.
+
+    [JsonPropertyName("cargoReference")]
+    public string? CargoReference { get; set; }
+
+    [JsonPropertyName("cargoType")]
+    public string? CargoType { get; set; }
+
+    [JsonPropertyName("cargoRoute")]
+    public string? CargoRoute { get; set; }
+
+    [JsonPropertyName("customerName")]
+    public string? CustomerName { get; set; }
+
+    [JsonPropertyName("vesselName")]
+    public string? VesselName { get; set; }
+
+    [JsonPropertyName("vesselType")]
+    public string? VesselType { get; set; }
+
+    [JsonPropertyName("vesselDwt")]
+    public double? VesselDwt { get; set; }
+
+    [JsonPropertyName("vesselImo")]
+    public string? VesselImo { get; set; }
 }

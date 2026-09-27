@@ -89,6 +89,25 @@ async function withCollectionAuth<T>(
     }
   }
 
+  // Another request may have refreshed the session while this one was being
+  // rejected - use its fresh token rather than spending the refresh token again.
+  const current = getCollectionToken();
+  if (current && !tokens.includes(current)) {
+    for (const style of styles) {
+      try {
+        const result = await fn(current, style);
+        setAuthMode(style);
+        return result;
+      } catch (error) {
+        if (error instanceof SeasBrokerApiError && error.status === 401) {
+          lastError = error;
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+
   // Every known token was rejected — the access token has likely expired
   // (e.g. the tab was idle past its 60-minute lifetime). Try minting a new
   // one from the refresh token before giving up.

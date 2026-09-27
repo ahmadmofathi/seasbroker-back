@@ -201,7 +201,20 @@ export async function userLogin(email: string, password: string): Promise<UserAu
   return response;
 }
 
-export async function userRefresh(refreshToken?: string): Promise<UserAuthResponse> {
+// The server rotates refresh tokens: each one works exactly once. Admin pages fire several requests
+// at once, and when the access token has expired every one of them tries to refresh - the first
+// succeeds and the rest were rejected with the now-used token, so those lists came back empty
+// (e.g. Matching showing ids and "Matching Rules (0)"). Concurrent callers now share one refresh.
+let refreshInFlight: Promise<UserAuthResponse> | null = null;
+
+export function userRefresh(refreshToken?: string): Promise<UserAuthResponse> {
+  refreshInFlight ??= refreshOnce(refreshToken).finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+}
+
+async function refreshOnce(refreshToken?: string): Promise<UserAuthResponse> {
   const token = refreshToken ?? getRefreshToken();
   if (!token) {
     throw new Error('No refresh token available');
