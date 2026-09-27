@@ -102,7 +102,7 @@ internal static class CargoDomainHelper
             .Select(s => s.FormVersion.FormDefinition.Key)
             .FirstOrDefaultAsync(cancellationToken);
 
-        return RequestedQuote.IsCargoRequest(quote.CargoType, sourceFormKey);
+        return RequestedQuote.IsCargoRequest(quote.CargoType, sourceFormKey, quote.AdditionalInfo);
     }
 
     public static async Task<CargoListing> GetCargoListingOrThrowAsync(

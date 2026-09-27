@@ -287,4 +287,24 @@ public class CargoBusinessRulesTests
                 .HandleAsync(new PromoteQuoteToCargoCommand(quote.Id.ToString(), null, null, null, edits)));
         Assert.Empty(dbContext.CargoListings);
     }
+
+    [Theory]
+    [InlineData("[Ship Brokerage] Vessel Name: Sea Star", false)]
+    [InlineData("[Customs Clearance] Import", false)]
+    [InlineData("[Contact] Subject: hi", false)]
+    [InlineData("[Cargo Brokerage] Commodity: wheat", true)]
+    [InlineData("Old quote with no tag", true)]
+    [InlineData(null, true)]
+    public void IsCargoRequest_UsesTheServiceTag_ForRequestsWithoutAFormSubmission(string? additionalInfo, bool expected)
+    {
+        Assert.Equal(expected, RequestedQuote.IsCargoRequest("Bulk Carrier", sourceFormKey: null, additionalInfo));
+    }
+
+    [Fact]
+    public void IsCargoRequest_TrustsTheFormOverTheTag()
+    {
+        // A form submission is authoritative: a cargo form request is cargo whatever its notes say.
+        Assert.True(RequestedQuote.IsCargoRequest("Dry Bulk", FormDefinition.CargoRequestKey, "[Ship Brokerage] pasted text"));
+        Assert.False(RequestedQuote.IsCargoRequest("Bulk Carrier", FormDefinition.ShipRequestKey, "[Cargo Brokerage]"));
+    }
 }

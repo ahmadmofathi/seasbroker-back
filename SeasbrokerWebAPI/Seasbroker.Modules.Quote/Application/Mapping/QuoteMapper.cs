@@ -34,7 +34,7 @@ public static class QuoteMapper
             VesselId = vessel?.Id.ToString(),
             VesselName = vessel?.Name,
             CargoListingReference = cargoListing?.ReferenceNumber,
-            CanPromote = global::Seasbroker.Infrastructure.Persistence.Entities.RequestedQuote.IsCargoRequest(quote.CargoType, sourceFormKey),
+            CanPromote = global::Seasbroker.Infrastructure.Persistence.Entities.RequestedQuote.IsCargoRequest(quote.CargoType, sourceFormKey, quote.AdditionalInfo),
             CargoListingId = cargoListing?.Id.ToString(),
             Id = quote.Id.ToString(),
             CollectionId = QuoteConstants.RequestedQuotesCollectionName,

@@ -6,14 +6,33 @@ public class RequestedQuote : AuditableEntity
     public const string ContactInquiryCargoType = "Contact Inquiry";
 
     /// <summary>
-    /// Ship, Clearance and Contact requests are stored as quotes too, but they carry no real cargo.
-    /// A quote can become a cargo listing when it came from the Cargo Brokerage form, or through the
-    /// direct quote API (<paramref name="sourceFormKey"/> null) as long as it isn't a Contact message.
+    /// Service tags the old public site put at the start of AdditionalInfo (e.g. "[Ship Brokerage] ...")
+    /// for requests that carry no cargo. Requests sent before the Forms module have no form
+    /// submission, so this tag is the only way to tell what they were.
     /// </summary>
-    public static bool IsCargoRequest(string cargoType, string? sourceFormKey) =>
-        sourceFormKey is null
-            ? !string.Equals(cargoType, ContactInquiryCargoType, StringComparison.OrdinalIgnoreCase)
-            : sourceFormKey == FormDefinition.CargoRequestKey;
+    private static readonly string[] NonCargoServiceTags = { "[Ship Brokerage]", "[Customs Clearance]", "[Contact]" };
+
+    /// <summary>
+    /// Ship, Clearance and Contact requests are stored as quotes too, but they carry no real cargo.
+    /// A quote can become a cargo listing when it came from the Cargo Brokerage form, or - for
+    /// requests with no form submission (<paramref name="sourceFormKey"/> null: the direct quote API
+    /// and the old public forms) - when it isn't a Contact message or tagged as a ship/clearance request.
+    /// </summary>
+    public static bool IsCargoRequest(string cargoType, string? sourceFormKey, string? additionalInfo = null)
+    {
+        if (sourceFormKey is not null)
+        {
+            return sourceFormKey == FormDefinition.CargoRequestKey;
+        }
+
+        if (string.Equals(cargoType, ContactInquiryCargoType, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var info = additionalInfo?.TrimStart() ?? string.Empty;
+        return !NonCargoServiceTags.Any(tag => info.StartsWith(tag, StringComparison.OrdinalIgnoreCase));
+    }
 
     public Guid CustomerId { get; set; }
 

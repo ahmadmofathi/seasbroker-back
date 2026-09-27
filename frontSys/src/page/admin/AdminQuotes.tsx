@@ -157,6 +157,16 @@ const AdminQuotes: React.FC = () => {
                               <i className="ri-checkbox-circle-line" /> Promoted
                               {q.cargoListingReference ? ` · ${q.cargoListingReference}` : ''}
                             </Link>
+                          ) : !q.canPromote && serviceFromNotes(q.additionalInfo) === 'Ship Brokerage' ? (
+                            // Sent before the Forms module: the vessel details are only free text, so it
+                            // can't be added to the fleet automatically.
+                            <Link
+                              className="admin-result-text"
+                              to="/admin/vessels"
+                              title="This older ship request can't be added automatically - add the vessel by hand"
+                            >
+                              Add vessel manually
+                            </Link>
                           ) : !q.canPromote ? (
                             <span className="admin-result-text" title="Only Cargo Brokerage requests can become cargo listings">
                               Not cargo
