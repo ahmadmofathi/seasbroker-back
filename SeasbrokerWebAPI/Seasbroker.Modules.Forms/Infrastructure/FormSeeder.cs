@@ -20,18 +20,21 @@ namespace Seasbroker.Modules.Forms.Infrastructure;
 /// version (and to an open draft, if there is one), keeping every admin edit. A new version is
 /// published only when a patch actually changed something; the previous one is archived, not deleted.
 /// </summary>
-public class FormSeeder : IHostedService
+public class FormSeeder : ResilientStartupTask
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<FormSeeder> _logger;
 
     public FormSeeder(IServiceScopeFactory scopeFactory, ILogger<FormSeeder> logger)
+        : base(logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override string Name => "Form seeding";
+
+    protected override async Task RunOnceAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<SeasbrokerDbContext>();
@@ -152,5 +155,4 @@ public class FormSeeder : IHostedService
         _logger.LogInformation("Seeded form '{FormKey}' with a published v1 schema.", key);
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

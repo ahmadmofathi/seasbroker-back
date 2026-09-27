@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Seasbroker.Infrastructure.Persistence;
 using Microsoft.Extensions.Options;
 using Seasbroker.Infrastructure.Persistence.Entities;
 using Seasbroker.Modules.Identity.Application.Constants;
@@ -9,7 +10,7 @@ using Seasbroker.Modules.Identity.Infrastructure.Options;
 
 namespace Seasbroker.Modules.Identity.Infrastructure;
 
-public class SuperuserSeeder : IHostedService
+public class SuperuserSeeder : ResilientStartupTask
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly SuperuserSeedOptions _options;
@@ -19,13 +20,16 @@ public class SuperuserSeeder : IHostedService
         IServiceScopeFactory scopeFactory,
         IOptions<SuperuserSeedOptions> options,
         ILogger<SuperuserSeeder> logger)
+        : base(logger)
     {
         _scopeFactory = scopeFactory;
         _options = options.Value;
         _logger = logger;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override string Name => "Superuser seeding";
+
+    protected override async Task RunOnceAsync(CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_options.Email) || string.IsNullOrWhiteSpace(_options.Password))
         {
@@ -96,5 +100,4 @@ public class SuperuserSeeder : IHostedService
         _logger.LogInformation("Seeded superuser account '{Email}'.", _options.Email);
     }
 
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

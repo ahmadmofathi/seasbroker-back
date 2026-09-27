@@ -8,7 +8,7 @@ using Seasbroker.Modules.Matching.Application.Constants;
 
 namespace Seasbroker.Modules.Matching.Infrastructure;
 
-public class MatchingRuleSeeder : IHostedService
+public class MatchingRuleSeeder : ResilientStartupTask
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<MatchingRuleSeeder> _logger;
@@ -16,12 +16,15 @@ public class MatchingRuleSeeder : IHostedService
     public MatchingRuleSeeder(
         IServiceScopeFactory scopeFactory,
         ILogger<MatchingRuleSeeder> logger)
+        : base(logger)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
 
-    public async Task StartAsync(CancellationToken cancellationToken)
+    protected override string Name => "Matching rule seeding";
+
+    protected override async Task RunOnceAsync(CancellationToken cancellationToken)
     {
         using var scope = _scopeFactory.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<SeasbrokerDbContext>();
@@ -45,8 +48,6 @@ public class MatchingRuleSeeder : IHostedService
 
         _logger.LogInformation("Seeded {Count} default matching rules.", rules.Length);
     }
-
-    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     private static MatchingRule CreateRule(string name, string criterion, decimal weight) =>
         new()
