@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { listCollection } from '../api/client';
 
 /**
@@ -13,6 +13,12 @@ export interface ServiceCardText {
   button: string;
 }
 
+/** One block of the Service Details page. Paragraphs in `body` are separated by a blank line. */
+export interface ServiceDetailsSection {
+  heading: string;
+  body: string;
+}
+
 export interface ServicesContent {
   /** Section above the service cards on the home page. */
   homeHeading: string;
@@ -22,7 +28,14 @@ export interface ServicesContent {
   pagePara: string;
   /** In ServiceData order: Cargo Brokerage, Ship Brokerage, Customs Clearance. */
   services: ServiceCardText[];
+  /** The Service Details page. */
+  details: {
+    title: string;
+    sections: ServiceDetailsSection[];
+  };
 }
+
+export const MAX_DETAILS_SECTIONS = 10;
 
 export const SERVICES_SETTING_KEY = 'services_content';
 
@@ -51,7 +64,33 @@ export const DEFAULT_SERVICES_CONTENT: ServicesContent = {
       button: 'Register Clearance',
     },
   ],
+  // Until someone writes this page, it describes the three services (it used to be placeholder text).
+  details: {
+    title: 'Service Details',
+    sections: [
+      {
+        heading: 'Cargo Brokerage',
+        body: 'We facilitate the delivering of cargos, ensuring smooth transactions and timely deliveries.',
+      },
+      {
+        heading: 'Ship Brokerage',
+        body: 'Our ship brokerage services connect you with reliable vessels and shipping partners for efficient transport.',
+      },
+      {
+        heading: 'Customs Clearance',
+        body: 'Our customs clearance experts navigate the complexities of regulations to ensure your cargo moves seamlessly.',
+      },
+    ],
+  },
 };
+
+/** Splits a section body into paragraphs on blank lines. */
+export function paragraphs(body: string): string[] {
+  return body
+    .split(/\r?\n\s*\r?\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+}
 
 const text = (value: unknown, fallback: string): string =>
   typeof value === 'string' && value.trim() ? value : fallback;
@@ -68,6 +107,14 @@ export function parseServicesContent(raw?: string | null): ServicesContent {
 
   const d = DEFAULT_SERVICES_CONTENT;
   const services = Array.isArray(stored.services) ? stored.services : [];
+  const storedDetails: Partial<ServicesContent['details']> =
+    stored.details && typeof stored.details === 'object' ? stored.details : {};
+  const storedSections = Array.isArray(storedDetails.sections)
+    ? storedDetails.sections
+        .map((s: Partial<ServiceDetailsSection>) => ({ heading: text(s.heading, ''), body: text(s.body, '') }))
+        .filter((s) => s.heading || s.body)
+        .slice(0, MAX_DETAILS_SECTIONS)
+    : [];
   return {
     homeHeading: text(stored.homeHeading, d.homeHeading),
     homePara: text(stored.homePara, d.homePara),
@@ -81,19 +128,22 @@ export function parseServicesContent(raw?: string | null): ServicesContent {
         button: text(card.button, fallback.button),
       };
     }),
+    details: {
+      title: text(storedDetails.title, d.details.title),
+      sections: storedSections.length > 0 ? storedSections : d.details.sections,
+    },
   };
 }
 
-/** Public pages: starts with the defaults and swaps in the saved text once it loads. */
-export function useServicesContent(): ServicesContent {
-  const [content, setContent] = useState<ServicesContent>(DEFAULT_SERVICES_CONTENT);
+/** Public system settings as key → value; empty until loaded (or if they can't be). */
+export function usePublicSettings(): Record<string, string> {
+  const [settings, setSettings] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let active = true;
     listCollection<{ key: string; value: string }>('settings', { page: 1, perPage: 100 })
       .then((res) => {
-        const item = res.items.find((s) => s.key === SERVICES_SETTING_KEY);
-        if (active && item) setContent(parseServicesContent(item.value));
+        if (active) setSettings(Object.fromEntries(res.items.map((s) => [s.key, s.value])));
       })
       .catch(() => {
         // keep the defaults if settings can't be loaded
@@ -103,5 +153,16 @@ export function useServicesContent(): ServicesContent {
     };
   }, []);
 
-  return content;
+  return settings;
+}
+
+/** Services text from already-loaded settings (defaults until they arrive). */
+export function useServicesContentFrom(settings: Record<string, string>): ServicesContent {
+  const raw = settings[SERVICES_SETTING_KEY];
+  return useMemo(() => parseServicesContent(raw), [raw]);
+}
+
+/** Public pages: starts with the defaults and swaps in the saved text once it loads. */
+export function useServicesContent(): ServicesContent {
+  return useServicesContentFrom(usePublicSettings());
 }

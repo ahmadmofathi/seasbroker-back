@@ -5,9 +5,11 @@ import { formatApiError } from '../../utils/formatApiError';
 import { ServiceData } from '../../component/Common/Service/ServiceData';
 import {
   DEFAULT_SERVICES_CONTENT,
+  MAX_DETAILS_SECTIONS,
   SERVICES_SETTING_KEY,
   parseServicesContent,
   type ServiceCardText,
+  type ServiceDetailsSection,
   type ServicesContent,
 } from '../../content/servicesContent';
 
@@ -46,7 +48,7 @@ const AdminServices: React.FC = () => {
     load();
   }, []);
 
-  const setField = (key: keyof Omit<ServicesContent, 'services'>, value: string) => {
+  const setField = (key: keyof Omit<ServicesContent, 'services' | 'details'>, value: string) => {
     setContent((c) => ({ ...c, [key]: value }));
   };
 
@@ -57,6 +59,34 @@ const AdminServices: React.FC = () => {
     }));
   };
 
+  const setDetailsTitle = (title: string) => {
+    setContent((c) => ({ ...c, details: { ...c.details, title } }));
+  };
+
+  const setSection = (index: number, key: keyof ServiceDetailsSection, value: string) => {
+    setContent((c) => ({
+      ...c,
+      details: {
+        ...c.details,
+        sections: c.details.sections.map((s, i) => (i === index ? { ...s, [key]: value } : s)),
+      },
+    }));
+  };
+
+  const addSection = () => {
+    setContent((c) => ({
+      ...c,
+      details: { ...c.details, sections: [...c.details.sections, { heading: '', body: '' }] },
+    }));
+  };
+
+  const removeSection = (index: number) => {
+    setContent((c) => ({
+      ...c,
+      details: { ...c.details, sections: c.details.sections.filter((_, i) => i !== index) },
+    }));
+  };
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const blank =
@@ -64,6 +94,18 @@ const AdminServices: React.FC = () => {
       content.services.some((s) => !s.heading.trim() || !s.para.trim() || !s.button.trim());
     if (blank) {
       showError('Every heading, description and button text needs some text.');
+      return;
+    }
+    if (!content.details.title.trim()) {
+      showError('The Service Details page needs a title.');
+      return;
+    }
+    if (content.details.sections.some((s) => !s.heading.trim() && !s.body.trim())) {
+      showError('Remove the empty section on the Service Details page, or write something in it.');
+      return;
+    }
+    if (content.details.sections.length === 0) {
+      showError('The Service Details page needs at least one section.');
       return;
     }
 
@@ -149,6 +191,56 @@ const AdminServices: React.FC = () => {
             </div>
           </div>
         ))}
+
+        <h2 style={{ fontSize: '1.2rem', color: 'var(--admin-navy)', margin: '2.5rem 0 0.5rem', borderTop: '1px solid var(--admin-border)', paddingTop: '1.5rem' }}>
+          Service Details page
+        </h2>
+        <p className="admin-result-text" style={{ margin: 0 }}>
+          The page at /service_details. The first two sections show the page's pictures. Leave an empty
+          line between paragraphs. Contact details on this page come from System Settings.
+        </p>
+        <div className="admin-form-grid" style={{ marginTop: '1rem' }}>
+          <div className="admin-field full">
+            <label htmlFor="s-details-title">Page title</label>
+            <input id="s-details-title" className="admin-input" value={content.details.title} onChange={(e) => { setDetailsTitle(e.target.value); }} />
+          </div>
+        </div>
+
+        {content.details.sections.map((section, index) => (
+          <div key={index}>
+            <h3 style={{ ...sectionTitle, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              Section {index + 1}
+              <button
+                type="button"
+                className="admin-btn-sm danger"
+                onClick={() => { removeSection(index); }}
+                disabled={content.details.sections.length <= 1}
+                title={content.details.sections.length <= 1 ? 'The page needs at least one section' : undefined}
+              >
+                Remove
+              </button>
+            </h3>
+            <div className="admin-form-grid">
+              <div className="admin-field full">
+                <label htmlFor={`s-sec-${String(index)}-heading`}>Heading</label>
+                <input id={`s-sec-${String(index)}-heading`} className="admin-input" value={section.heading} onChange={(e) => { setSection(index, 'heading', e.target.value); }} />
+              </div>
+              <div className="admin-field full">
+                <label htmlFor={`s-sec-${String(index)}-body`}>Text</label>
+                <textarea id={`s-sec-${String(index)}-body`} className="admin-input" rows={6} value={section.body} onChange={(e) => { setSection(index, 'body', e.target.value); }} />
+              </div>
+            </div>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="admin-btn-sm outline"
+          style={{ marginTop: '1rem' }}
+          onClick={addSection}
+          disabled={content.details.sections.length >= MAX_DETAILS_SECTIONS}
+        >
+          + Add section
+        </button>
 
         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem' }}>
           <button type="submit" className="admin-btn-sm primary" disabled={saving}>
