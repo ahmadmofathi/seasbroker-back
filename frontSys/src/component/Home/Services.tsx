@@ -2,14 +2,15 @@ import SectionHeading from '../Common/SectionHeading';
 import ServiceCard from '../Common/Service/ServiceCard';
 import { ServiceData } from '../Common/Service/ServiceData';
 import { Swiper, SwiperSlide } from 'swiper/react';
+import { useServicesContent } from '../../content/servicesContent';
 
 const Services: React.FC = () => {
+  const content = useServicesContent();
   return (
     <>
       <section id="home_two_service">
         <div className="container">
-          <SectionHeading heading="Taking care of you and your business all the way" para="Solving your supply chain needs from end to end, taking the
-        complexity out of container shipping. We are at the forefront of developing innovation."/>
+          <SectionHeading heading={content.homeHeading} para={content.homePara} />
           <div className="row">
             <div className="col-lg-12 col-md-12 col-sm-12 col-12">
               <div className="service_slider_home_two">
@@ -33,9 +34,9 @@ const Services: React.FC = () => {
                       <ServiceCard
                         links={data.link}
                         img={data.img}
-                        heading={data.heading}
-                        para={data.para}
-                        button={data.button}
+                        heading={content.services[index]?.heading ?? data.heading}
+                        para={content.services[index]?.para ?? data.para}
+                        button={content.services[index]?.button ?? data.button}
                       />
                     </SwiperSlide>
                   ))}

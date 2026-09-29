@@ -41,6 +41,7 @@ import AdminFormBuilder from './page/admin/AdminFormBuilder';
 import AdminNotifications from './page/admin/AdminNotifications';
 import AdminSettings from './page/admin/AdminSettings';
 import AdminFaqs from './page/admin/AdminFaqs';
+import AdminServices from './page/admin/AdminServices';
 import AdminApiTest from './page/admin/AdminApiTest';
 
 const PublicLayout: React.FC = () => (
@@ -89,6 +90,7 @@ const AdminRoutes: React.FC = () => (
             <Route path="notifications" element={<AdminNotifications />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="faqs" element={<AdminFaqs />} />
+            <Route path="services" element={<AdminServices />} />
             <Route path="api-test" element={<AdminApiTest />} />
           </Route>
         </Route>
