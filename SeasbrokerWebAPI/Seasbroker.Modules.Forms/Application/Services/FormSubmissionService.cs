@@ -156,6 +156,7 @@ public class FormSubmissionService : IFormSubmissionService
         {
             SubmissionId = submission.Id.ToString(),
             RequestedQuoteId = requestedQuote.Id.ToString(),
+            TrackingNumber = requestedQuote.TrackingNumber,
         };
     }
 

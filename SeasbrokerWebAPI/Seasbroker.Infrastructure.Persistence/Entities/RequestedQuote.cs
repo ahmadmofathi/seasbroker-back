@@ -34,6 +34,18 @@ public class RequestedQuote : AuditableEntity
         return !NonCargoServiceTags.Any(tag => info.StartsWith(tag, StringComparison.OrdinalIgnoreCase));
     }
 
+    public const string TrackingNumberPrefix = "SB-";
+
+    /// <summary>A new customer-facing tracking number, e.g. "SB-7C4A9F2E".</summary>
+    public static string NewTrackingNumber() =>
+        TrackingNumberPrefix + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+
+    /// <summary>
+    /// What the customer is shown after registering and uses (with their email) to follow the
+    /// request on the public tracking page. Every request gets one when it's created.
+    /// </summary>
+    public string TrackingNumber { get; set; } = NewTrackingNumber();
+
     public Guid CustomerId { get; set; }
 
     public Customer Customer { get; set; } = null!;

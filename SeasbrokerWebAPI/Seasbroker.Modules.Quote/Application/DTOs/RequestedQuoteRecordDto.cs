@@ -58,6 +58,9 @@ public class RequestedQuoteRecordDto
     [JsonPropertyName("additionalInfo")]
     public string? AdditionalInfo { get; set; }
 
+    [JsonPropertyName("trackingNumber")]
+    public string TrackingNumber { get; set; } = string.Empty;
+
     [JsonPropertyName("isPromoted")]
     public bool IsPromoted { get; set; }
 

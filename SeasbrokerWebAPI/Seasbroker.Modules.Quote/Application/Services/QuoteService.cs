@@ -93,6 +93,7 @@ public class QuoteService : IQuoteService
         {
             Id = quote.Id.ToString(),
             RequestedQuoteId = quote.Id.ToString(),
+            TrackingNumber = quote.TrackingNumber,
         };
     }
 

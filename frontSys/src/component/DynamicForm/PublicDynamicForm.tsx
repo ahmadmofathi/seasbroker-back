@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { getPublishedSchema, submitForm } from '../../api/forms';
 import type { FormSchema } from '../../api/types';
 import { useAlert } from '../../context/AlertContext';
@@ -26,6 +26,9 @@ const PublicDynamicForm: React.FC<PublicDynamicFormProps> = ({
   const { success, error: showError } = useAlert();
   const [schema, setSchema] = useState<FormSchema | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Set once the request is registered: the customer keeps the number to follow it later.
+  const [registered, setRegistered] = useState<{ trackingNumber: string; email: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,6 +48,50 @@ const PublicDynamicForm: React.FC<PublicDynamicFormProps> = ({
     return (
       <div className="col-lg-12">
         <div className="alert alert-danger">{loadError}</div>
+      </div>
+    );
+  }
+
+  if (registered) {
+    return (
+      <div className="col-lg-12">
+        <div className="heading_quote">
+          <h3>Request received</h3>
+        </div>
+        <div className="alert alert-success" role="status">
+          <p className="mb-2">{successMessage}</p>
+          <p className="mb-1">Your tracking number is</p>
+          <p className="d-flex align-items-center flex-wrap gap-2 mb-2">
+            <strong style={{ fontSize: '1.6rem', letterSpacing: '0.05em' }}>{registered.trackingNumber}</strong>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-success"
+              onClick={() => {
+                void navigator.clipboard.writeText(registered.trackingNumber).then(() => { setCopied(true); });
+              }}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </p>
+          <p className="mb-0">
+            Keep this number. With the email address you registered with, it lets you follow your
+            request any time from the Track Your Service page.
+          </p>
+        </div>
+        <div className="d-flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="btn btn-theme"
+            onClick={() => {
+              void navigate('/your_shipment', {
+                state: { number: registered.trackingNumber, email: registered.email },
+              });
+            }}
+          >
+            Track this request
+          </button>
+          <Link to={redirectTo} className="btn btn-outline-secondary">Back to home</Link>
+        </div>
       </div>
     );
   }
@@ -75,9 +122,21 @@ const PublicDynamicForm: React.FC<PublicDynamicFormProps> = ({
       }
       onSubmit={async (values, files) => {
         try {
-          await submitForm(formKey, values, files);
+          const response = await submitForm(formKey, values, files);
           success(successMessage);
-          void navigate(redirectTo);
+          if (response.trackingNumber) {
+            const emailField = schema.sections
+              .flatMap((s) => s.fields)
+              .find((f) => f.systemFieldKey === 'Email');
+            const email = emailField ? values[emailField.key] : undefined;
+            setRegistered({
+              trackingNumber: response.trackingNumber,
+              email: typeof email === 'string' ? email : '',
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          } else {
+            void navigate(redirectTo);
+          }
         } catch (err) {
           showError(formatApiError(err));
           throw err;

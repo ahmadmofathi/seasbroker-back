@@ -15,6 +15,14 @@ public class RequestedQuoteConfiguration : IEntityTypeConfiguration<RequestedQuo
         builder.Property(q => q.Id)
             .ValueGeneratedNever();
 
+        builder.Property(q => q.TrackingNumber)
+            .IsRequired()
+            .HasMaxLength(20);
+
+        builder.HasIndex(q => q.TrackingNumber)
+            .IsUnique()
+            .HasDatabaseName("IX_requested_quotes_TrackingNumber");
+
         builder.Property(q => q.CustomerId)
             .IsRequired();
 

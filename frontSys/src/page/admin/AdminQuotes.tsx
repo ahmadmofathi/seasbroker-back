@@ -118,6 +118,11 @@ const AdminQuotes: React.FC = () => {
                         <div style={{ fontSize: '0.75rem', color: 'var(--admin-muted)' }}>
                           {q.email} · {q.phoneNumber}
                         </div>
+                        {q.trackingNumber && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--admin-muted)' }} title="The customer's tracking number">
+                            Tracking: <strong>{q.trackingNumber}</strong>
+                          </div>
+                        )}
                       </td>
                       <td>{q.cargoType}</td>
                       <td>

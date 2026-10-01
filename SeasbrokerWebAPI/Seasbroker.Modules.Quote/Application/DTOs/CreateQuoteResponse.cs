@@ -12,4 +12,8 @@ public class CreateQuoteResponse
 
     [JsonPropertyName("requestedQuoteId")]
     public string RequestedQuoteId { get; set; } = string.Empty;
+
+    /// <summary>What the customer uses, with their email, to follow the request on the tracking page.</summary>
+    [JsonPropertyName("trackingNumber")]
+    public string TrackingNumber { get; set; } = string.Empty;
 }

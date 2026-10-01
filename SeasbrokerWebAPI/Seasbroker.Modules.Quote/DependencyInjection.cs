@@ -11,6 +11,7 @@ public static class DependencyInjection
     {
         services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IQuoteService, QuoteService>();
+        services.AddScoped<IRequestTrackingService, RequestTrackingService>();
         services.AddExceptionHandler<QuoteExceptionHandler>();
 
         return services;

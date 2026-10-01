@@ -1,86 +1,19 @@
 import CommonBanner from '../component/Common/Banner';
 import OurPartner from '../component/Common/OurPartner';
 import SectionHeading from '../component/Common/SectionHeading';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { useState } from 'react';
 
-// TODO: Replace with more secure way of tracking shipments
 const TrackShipmentForm: React.FC = () => {
   const navigate = useNavigate();
-  // let options1 = [
-  //   {
-  //     text: "Select a city...",
-  //     value: ""
-  //   },
-  //   {
-  //     text: "Singapore",
-  //     value: "Singapore"
-  //   },
-  //   {
-  //     text: "Rotterdam",
-  //     value: "Rotterdam"
-  //   },
-  //   {
-  //     text: "Shanghai",
-  //     value: "Shanghai"
-  //   },
-  //   {
-  //     text: "Los Angeles",
-  //     value: "Los Angeles"
-  //   },
-  //   {
-  //     text: "Hamburg",
-  //     value: "Hamburg"
-  //   },
-  //   {
-  //     text: "Dubai",
-  //     value: "Dubai"
-  //   },
-  //   {
-  //     text: "Busan",
-  //     value: "Busan"
-  //   },
-  //   {
-  //     text: "Antwerp",
-  //     value: "Antwerp"
-  //   },
-  //   {
-  //     text: "Hong Kong",
-  //     value: "Hong Kong"
-  //   },
-  //   {
-  //     text: "Port of New York and New Jersey",
-  //     value: "New York"
-  //   },
-  //   {
-  //     text: "Manila",
-  //     value: "Manila"
-  //   },
-  //   {
-  //     text: "Mumbai",
-  //     value: "Mumbai"
-  //   },
-  //   {
-  //     text: "Santos",
-  //     value: "Santos"
-  //   },
-  //   {
-  //     text: "Jebel Ali",
-  //     value: "Jebel Ali"
-  //   },
-  //   {
-  //     text: "Colombo",
-  //     value: "Colombo"
-  //   },
-  // ];
-
-  const [trackingNumber, setTrackingNumber] = useState<string>('');
+  const [searchParams] = useSearchParams();
+  const [trackingNumber, setTrackingNumber] = useState<string>(() => searchParams.get('id') ?? '');
   const [email, setEmail] = useState<string>('');
 
   const handleSubmit: React.FormEventHandler = (e) => {
     e.preventDefault();
-    // Redirect to track shipment page with query parameters
-    void navigate(`/your_shipment?id=${(trackingNumber)}&email=${(email)}`);
+    // Hand the lookup over in router state so the email never appears in the URL.
+    void navigate('/your_shipment', { state: { number: trackingNumber.trim(), email: email.trim() } });
   };
 
   return (
@@ -103,7 +36,7 @@ const TrackShipmentForm: React.FC = () => {
                       onChange={(e) => {setTrackingNumber(e.target.value)}}
                       required
                       className={'form-control'}
-                      placeholder={'Eg: AWB Num or CB Num'}
+                      placeholder={'Eg: SB-7C4A9F2E'}
                     />
                   </div>
                   <div className="form-group">

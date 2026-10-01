@@ -29,6 +29,7 @@ public static class QuoteMapper
     {
         return new RequestedQuoteRecordDto
         {
+            TrackingNumber = quote.TrackingNumber,
             IsPromoted = cargoListing.HasValue || vessel.HasValue,
             CanPromoteToVessel = sourceFormKey == global::Seasbroker.Infrastructure.Persistence.Entities.FormDefinition.ShipRequestKey,
             VesselId = vessel?.Id.ToString(),

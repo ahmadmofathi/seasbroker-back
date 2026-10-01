@@ -381,6 +381,31 @@ export interface FormSummary {
 export interface SubmitFormResponse {
   submissionId: string;
   requestedQuoteId?: string | null;
+  /** What the customer uses, with their email, to follow the request on the tracking page. */
+  trackingNumber?: string | null;
+}
+
+export interface TrackingStep {
+  key: string;
+  label: string;
+  done: boolean;
+  current: boolean;
+}
+
+/** A customer's view of their request on the public tracking page. */
+export interface RequestTracking {
+  trackingNumber: string;
+  service: string;
+  submittedAt: string;
+  type?: string | null;
+  departurePort?: string | null;
+  arrivalPort?: string | null;
+  status: string;
+  statusLabel: string;
+  statusDetail: string;
+  steps: TrackingStep[];
+  cargoReference?: string | null;
+  vesselName?: string | null;
 }
 
 export interface ChatEvent {
