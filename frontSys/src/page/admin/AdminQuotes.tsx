@@ -1,11 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { cargoApi, quoteApi, vesselsApi } from '../../api';
-import type { RequestedQuoteRecord } from '../../api/quote';
+import type { RequestAttachment, RequestedQuoteRecord } from '../../api/quote';
 import type { PromoteFromQuoteBody } from '../../api/types';
 import PromoteCargoModal from '../../component/admin/PromoteCargoModal';
 import { formatApiError } from '../../utils/formatApiError';
 import { useAlert } from '../../context/AlertContext';
+
+function formatSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${String(Math.max(1, Math.round(bytes / 1024)))} KB`;
+}
 
 function serviceFromNotes(info?: string): string {
   const match = info?.match(/^\[([^\]]+)\]/);
@@ -30,6 +35,19 @@ const AdminQuotes: React.FC = () => {
   useEffect(() => {
     load();
   }, []);
+
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const download = async (attachment: RequestAttachment) => {
+    setDownloadingId(attachment.id);
+    try {
+      await quoteApi.downloadAttachment(attachment);
+    } catch (e) {
+      showError(formatApiError(e));
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   // The request being reviewed in the promote dialog, if it's open.
   const [reviewing, setReviewing] = useState<RequestedQuoteRecord | null>(null);
@@ -131,6 +149,27 @@ const AdminQuotes: React.FC = () => {
                       <td>{q.weight.toLocaleString()} MT</td>
                       <td style={{ maxWidth: 240, fontSize: '0.8rem', color: 'var(--admin-muted)' }}>
                         {q.additionalInfo || q.dimensions}
+                        {q.attachments && q.attachments.length > 0 && (
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <div style={{ fontWeight: 600, color: 'var(--admin-navy)' }}>
+                              Attachments ({q.attachments.length})
+                            </div>
+                            {q.attachments.map((file) => (
+                              <button
+                                key={file.id}
+                                type="button"
+                                className="admin-btn-sm outline"
+                                style={{ display: 'block', marginTop: '0.25rem', maxWidth: '100%', textAlign: 'start', overflowWrap: 'anywhere' }}
+                                title={`Download ${file.fileName} (uploaded to "${file.fieldKey}")`}
+                                disabled={downloadingId === file.id}
+                                onClick={() => void download(file)}
+                              >
+                                <i className="ri-attachment-2" />{' '}
+                                {downloadingId === file.id ? 'Downloading…' : `${file.fileName} · ${formatSize(file.sizeBytes)}`}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </td>
                       <td>
                         <div className="admin-actions-cell">

@@ -61,6 +61,10 @@ public class RequestedQuoteRecordDto
     [JsonPropertyName("trackingNumber")]
     public string TrackingNumber { get; set; } = string.Empty;
 
+    /// <summary>Files the customer uploaded with the request (documents, photos, SDS, ...).</summary>
+    [JsonPropertyName("attachments")]
+    public List<RequestAttachmentDto> Attachments { get; set; } = new();
+
     [JsonPropertyName("isPromoted")]
     public bool IsPromoted { get; set; }
 
@@ -83,4 +87,27 @@ public class RequestedQuoteRecordDto
     /// <summary>False for Ship, Clearance and Contact requests, which carry no cargo to promote.</summary>
     [JsonPropertyName("canPromote")]
     public bool CanPromote { get; set; }
+}
+
+/// <summary>
+/// One uploaded file. Downloaded (admin only) from
+/// /api/forms/submissions/{submissionId}/files/{id}.
+/// </summary>
+public class RequestAttachmentDto
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("submissionId")]
+    public string SubmissionId { get; set; } = string.Empty;
+
+    /// <summary>The form field it was uploaded to, e.g. "documentsFile".</summary>
+    [JsonPropertyName("fieldKey")]
+    public string FieldKey { get; set; } = string.Empty;
+
+    [JsonPropertyName("fileName")]
+    public string FileName { get; set; } = string.Empty;
+
+    [JsonPropertyName("sizeBytes")]
+    public long SizeBytes { get; set; }
 }

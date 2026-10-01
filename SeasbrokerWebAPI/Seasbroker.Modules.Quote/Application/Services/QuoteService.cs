@@ -129,6 +129,25 @@ public class QuoteService : IQuoteService
             .Where(v => v.RequestedQuoteId != null && quoteIds.Contains(v.RequestedQuoteId.Value))
             .ToDictionaryAsync(v => v.RequestedQuoteId!.Value, v => (v.Id, v.Name), cancellationToken);
 
+        var attachmentsByQuoteId = (await _dbContext.FormSubmissionFiles
+                .AsNoTracking()
+                .Where(f => f.FormSubmission.RequestedQuoteId != null && quoteIds.Contains(f.FormSubmission.RequestedQuoteId.Value))
+                .OrderBy(f => f.Created)
+                .Select(f => new
+                {
+                    QuoteId = f.FormSubmission.RequestedQuoteId!.Value,
+                    Attachment = new RequestAttachmentDto
+                    {
+                        Id = f.Id.ToString(),
+                        SubmissionId = f.FormSubmissionId.ToString(),
+                        FieldKey = f.FieldKey,
+                        FileName = f.FileName,
+                        SizeBytes = f.SizeBytes,
+                    },
+                })
+                .ToListAsync(cancellationToken))
+            .ToLookup(f => f.QuoteId, f => f.Attachment);
+
         var sourceFormKeys = await _dbContext.FormSubmissions
             .AsNoTracking()
             .Where(s => s.RequestedQuoteId != null && quoteIds.Contains(s.RequestedQuoteId.Value))
@@ -145,11 +164,16 @@ public class QuoteService : IQuoteService
             TotalItems = totalItems,
             TotalPages = totalPages,
             Items = quotes
-                .Select(q => QuoteMapper.ToRecordDto(
-                    q,
-                    promotedListingIdByQuoteId.TryGetValue(q.Id, out var listing) ? listing : null,
-                    sourceFormKeyByQuoteId.GetValueOrDefault(q.Id),
-                    vesselByQuoteId.TryGetValue(q.Id, out var vessel) ? vessel : null))
+                .Select(q =>
+                {
+                    var dto = QuoteMapper.ToRecordDto(
+                        q,
+                        promotedListingIdByQuoteId.TryGetValue(q.Id, out var listing) ? listing : null,
+                        sourceFormKeyByQuoteId.GetValueOrDefault(q.Id),
+                        vesselByQuoteId.TryGetValue(q.Id, out var vessel) ? vessel : null);
+                    dto.Attachments = attachmentsByQuoteId[q.Id].ToList();
+                    return dto;
+                })
                 .ToList(),
         };
     }

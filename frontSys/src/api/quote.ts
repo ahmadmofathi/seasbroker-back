@@ -1,4 +1,4 @@
-import { adminList } from './adminClient';
+import { adminDownloadFile, adminList } from './adminClient';
 import { api } from './client';
 import type { QuoteRequest } from './types';
 
@@ -9,6 +9,14 @@ export interface QuoteSubmitResponse {
 }
 
 /** Public quote request record (PocketBase-style collection). */
+export interface RequestAttachment {
+  id: string;
+  submissionId: string;
+  fieldKey: string;
+  fileName: string;
+  sizeBytes: number;
+}
+
 export interface RequestedQuoteRecord {
   id: string;
   collectionId: string;
@@ -30,6 +38,8 @@ export interface RequestedQuoteRecord {
   customer?: string;
   status?: string;
   trackingNumber?: string;
+  /** Files the customer uploaded with the request. */
+  attachments?: RequestAttachment[];
   isPromoted?: boolean;
   /** False for Ship, Clearance and Contact requests - only cargo requests can become cargo listings. */
   canPromote?: boolean;
@@ -55,4 +65,12 @@ export async function listRequestedQuotes(): Promise<RequestedQuoteRecord[]> {
     perPage: 100,
     sort: '-created',
   });
+}
+
+/** Downloads a file the customer uploaded with their request (admin only). */
+export function downloadAttachment(attachment: RequestAttachment): Promise<void> {
+  return adminDownloadFile(
+    `/api/forms/submissions/${attachment.submissionId}/files/${attachment.id}`,
+    attachment.fileName,
+  );
 }

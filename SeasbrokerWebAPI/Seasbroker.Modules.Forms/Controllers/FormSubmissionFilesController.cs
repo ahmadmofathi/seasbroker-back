@@ -39,7 +39,17 @@ public class FormSubmissionFilesController : ControllerBase
             return NotFound(new PocketBaseErrorResponse { Message = "File not found.", Status = StatusCodes.Status404NotFound });
         }
 
-        var stream = _fileStorage.OpenRead(file.StoragePath);
+        Stream stream;
+        try
+        {
+            stream = _fileStorage.OpenRead(file.StoragePath);
+        }
+        catch (IOException)
+        {
+            // The record exists but the file is no longer on disk (e.g. the server was rebuilt).
+            return NotFound(new PocketBaseErrorResponse { Message = "This file is no longer available on the server.", Status = StatusCodes.Status404NotFound });
+        }
+
         return File(stream, string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType, file.FileName);
     }
 }

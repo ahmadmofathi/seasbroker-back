@@ -1,5 +1,6 @@
 import pb from '../utils/pocketbase';
 import {
+  API_BASE,
   api,
   createRecord,
   deleteRecord,
@@ -17,7 +18,7 @@ import {
   superuserRefresh,
   userRefresh,
 } from './auth';
-import { getAuthMode, setAuthMode } from './authTokenStore';
+import { getAuthMode, normalizeToken, setAuthMode } from './authTokenStore';
 import type { PaginatedResponse } from './types';
 
 export function resetLoginRedirectFlag(): void {
@@ -233,6 +234,47 @@ export async function adminListPaginated<T>(
   query?: Record<string, string | number | undefined>,
 ): Promise<PaginatedResponse<T>> {
   return adminRequest<PaginatedResponse<T>>(path, { query });
+}
+
+/**
+ * Downloads a file from an admin-only endpoint and hands it to the browser to save. A plain link
+ * can't be used because the request needs the admin's token.
+ */
+export async function adminDownloadFile(path: string, fileName: string): Promise<void> {
+  const request = (token: string) =>
+    fetch(`${API_BASE}${path}`, { headers: { Authorization: `Bearer ${normalizeToken(token)}` } });
+
+  let token = getJwtToken() ?? getCollectionToken();
+  if (!token) {
+    throw new SeasBrokerApiError('Please sign in to continue.', 401);
+  }
+
+  let res = await request(token);
+  if (res.status === 401 && getRefreshToken()) {
+    await userRefresh();
+    token = getJwtToken() ?? getCollectionToken() ?? token;
+    res = await request(token);
+  }
+
+  if (!res.ok) {
+    let message = `Download failed (HTTP ${String(res.status)}).`;
+    try {
+      const body = (await res.json()) as { message?: string };
+      if (body.message) message = body.message;
+    } catch {
+      // not a JSON error body - keep the generic message
+    }
+    throw new SeasBrokerApiError(message, res.status);
+  }
+
+  const url = URL.createObjectURL(await res.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 export { pb as adminPb };
