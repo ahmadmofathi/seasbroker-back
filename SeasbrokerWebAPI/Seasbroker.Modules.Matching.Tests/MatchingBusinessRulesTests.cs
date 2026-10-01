@@ -129,6 +129,68 @@ public class MatchingEngineServiceTests
         Assert.Equal(0, result.MatchesCreated);
     }
 
+    [Theory]
+    [InlineData("General & Breakbulk Cargo", "RoRo", 0)]
+    [InlineData("General & Breakbulk Cargo", "Bulk", 0)]
+    [InlineData("General & Breakbulk Cargo", "General Cargo", 1)]
+    [InlineData("Dry Bulk", "General Cargo", 0)]
+    [InlineData("Dry Bulk", "Bulk", 1)]
+    [InlineData("Gas", "Tanker", 0)]
+    [InlineData("Gas", "LPG", 1)]
+    [InlineData("Other", "General Cargo", 0)]
+    public async Task RunForCargoAsync_OnlyProposesVesselsOfASuitableType(string cargoType, string vesselType, int expectedMatches)
+    {
+        await using var dbContext = CreateDbContext();
+        var departure = DateTime.UtcNow;
+        var arrival = departure.AddDays(10);
+        var cargoId = Guid.NewGuid();
+        var vesselId = Guid.NewGuid();
+
+        dbContext.CargoListings.Add(new CargoListing
+        {
+            Id = cargoId,
+            CustomerId = Guid.NewGuid(),
+            ReferenceNumber = "CRG-TYPE-001",
+            CargoType = cargoType,
+            Weight = 1000,
+            Dimensions = "1x1x1",
+            DeparturePort = "Rotterdam",
+            ArrivalPort = "Singapore",
+            DepartureTime = departure,
+            ArrivalTime = arrival,
+            Status = CargoStatus.Open,
+            Priority = 5,
+        });
+
+        // Everything else fits perfectly: same ports, covering dates, plenty of capacity.
+        dbContext.Vessels.Add(new Vessel
+        {
+            Id = vesselId,
+            Name = "Type Check Vessel",
+            VesselType = vesselType,
+            Dwt = 5000,
+            CurrentPort = "Rotterdam",
+            Status = VesselStatus.Active,
+        });
+
+        dbContext.VesselAvailabilities.Add(new VesselAvailability
+        {
+            VesselId = vesselId,
+            OpenPort = "Rotterdam",
+            DestinationPort = "Singapore",
+            AvailableFrom = departure.AddDays(-1),
+            AvailableTo = arrival.AddDays(1),
+            IsActive = true,
+        });
+
+        await dbContext.SaveChangesAsync();
+
+        var engine = CreateEngine(dbContext, new MatchingOptions { MinScore = 60, MaxProposalsPerCargo = 5 });
+        var result = await engine.RunForCargoAsync(cargoId);
+
+        Assert.Equal(expectedMatches, result.MatchesCreated);
+    }
+
     private static MatchingEngineService CreateEngine(SeasbrokerDbContext dbContext, MatchingOptions options)
     {
         return new MatchingEngineService(

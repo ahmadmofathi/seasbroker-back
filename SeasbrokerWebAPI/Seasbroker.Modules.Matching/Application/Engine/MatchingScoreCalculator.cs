@@ -168,15 +168,8 @@ public static class MatchingScoreCalculator
         return Math.Clamp(1m - ((utilization - 0.85m) / 0.15m), 0m, 1m);
     }
 
-    private static decimal CalculateTypeCompatibility(CargoListing cargo, Vessel vessel)
-    {
-        if (!MatchingConstants.CargoVesselTypeCompatibility.TryGetValue(cargo.CargoType, out var compatibleTypes))
-        {
-            return 0m;
-        }
-
-        return compatibleTypes.Contains(vessel.VesselType) ? 1m : 0m;
-    }
+    private static decimal CalculateTypeCompatibility(CargoListing cargo, Vessel vessel) =>
+        MatchingConstants.IsTypeCompatible(cargo.CargoType, vessel.VesselType) ? 1m : 0m;
 
     private static decimal CalculatePriorityBoost(CargoListing cargo)
     {
