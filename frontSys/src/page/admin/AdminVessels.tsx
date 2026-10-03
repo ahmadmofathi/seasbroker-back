@@ -25,6 +25,7 @@ type VesselForm = {
   flagCountry: string;
   status: VesselStatus;
   notes: string;
+  reeferPlugs: boolean;
 };
 
 const emptyForm = (): VesselForm => ({
@@ -39,6 +40,7 @@ const emptyForm = (): VesselForm => ({
   flagCountry: '',
   status: 'Active',
   notes: '',
+  reeferPlugs: false,
 });
 
 function fromVessel(v: VesselRecord): VesselForm {
@@ -54,6 +56,7 @@ function fromVessel(v: VesselRecord): VesselForm {
     flagCountry: v.flagCountry ?? '',
     status: v.status ?? 'Active',
     notes: v.notes ?? '',
+    reeferPlugs: v.reeferPlugs ?? false,
   };
 }
 
@@ -70,6 +73,8 @@ function toPayload(form: VesselForm): Partial<VesselRecord> {
     flagCountry: form.flagCountry.trim(),
     status: form.status,
     notes: form.notes.trim() || undefined,
+    // Only container ships can have reefer plugs, so don't keep a stale tick on another type.
+    reeferPlugs: form.vesselType === 'Container' && form.reeferPlugs,
   };
 }
 
@@ -216,7 +221,12 @@ const AdminVessels: React.FC = () => {
                         )}
                       </td>
                       <td>{v.imoNumber}</td>
-                      <td>{v.vesselType}</td>
+                      <td>
+                        {v.vesselType}
+                        {v.vesselType === 'Container' && v.reeferPlugs && (
+                          <div style={{ fontSize: '0.75rem', color: 'var(--admin-muted)' }}>Reefer plugs</div>
+                        )}
+                      </td>
                       <td>{v.dwt?.toLocaleString()}</td>
                       <td>{v.currentPort}</td>
                       <td>
@@ -301,6 +311,20 @@ const AdminVessels: React.FC = () => {
                 ))}
               </select>
             </div>
+            {form.vesselType === 'Container' && (
+              <div className="admin-field">
+                <label htmlFor="v-reefer">Reefer plugs</label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 400 }}>
+                  <input
+                    id="v-reefer"
+                    type="checkbox"
+                    checked={form.reeferPlugs}
+                    onChange={(e) => { setForm((f) => ({ ...f, reeferPlugs: e.target.checked })); }}
+                  />
+                  Can carry refrigerated cargo
+                </label>
+              </div>
+            )}
             <div className="admin-field">
               <label htmlFor="v-dwt">DWT</label>
               <input id="v-dwt" className="admin-input" type="number" min="0" required value={form.dwt} onChange={(e) => setField('dwt', e.target.value)} />

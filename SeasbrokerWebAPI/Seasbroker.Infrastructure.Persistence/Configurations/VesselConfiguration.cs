@@ -39,6 +39,10 @@ public class VesselConfiguration : IEntityTypeConfiguration<Vessel>
         builder.Property(v => v.FlagCountry)
             .HasMaxLength(100);
 
+        builder.Property(v => v.ReeferPlugs)
+            .IsRequired()
+            .HasDefaultValue(false);
+
         builder.Property(v => v.Status)
             .IsRequired()
             .HasMaxLength(50);

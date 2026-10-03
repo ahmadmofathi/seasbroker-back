@@ -39,4 +39,8 @@ public class UpdateVesselRequest
 
     [JsonPropertyName("notes")]
     public string? Notes { get; set; }
+
+    /// <summary>Container ships only: has reefer plugs, so it can carry refrigerated cargo.</summary>
+    [JsonPropertyName("reeferPlugs")]
+    public bool? ReeferPlugs { get; set; }
 }

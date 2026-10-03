@@ -20,6 +20,7 @@ public static class VesselMapper
             VesselType = vessel.VesselType,
             Dwt = vessel.Dwt,
             TeuCapacity = vessel.TeuCapacity,
+            ReeferPlugs = vessel.ReeferPlugs,
             LengthOverall = vessel.LengthOverall,
             Beam = vessel.Beam,
             Draft = vessel.Draft,

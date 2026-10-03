@@ -55,6 +55,18 @@ public static class MatchingConstants
         CargoVesselTypeCompatibility.TryGetValue(cargoType.Trim(), out var vesselTypes) &&
         vesselTypes.Contains(vesselType.Trim());
 
+    /// <summary>Cargo that needs power for refrigeration, so only a vessel with reefer plugs can carry it.</summary>
+    public static readonly IReadOnlySet<string> CargoRequiringReeferPlugs =
+        new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "Refrigerated & Perishable Cargo" };
+
+    /// <summary>
+    /// The full suitability check for automatic matching: the vessel's type has to suit the cargo,
+    /// and refrigerated cargo also needs a vessel that has reefer plugs.
+    /// </summary>
+    public static bool CanCarry(string? cargoType, string? vesselType, bool vesselHasReeferPlugs) =>
+        IsTypeCompatible(cargoType, vesselType) &&
+        (vesselHasReeferPlugs || cargoType is null || !CargoRequiringReeferPlugs.Contains(cargoType.Trim()));
+
     private static IReadOnlySet<string> Types(params string[] vesselTypes) =>
         new HashSet<string>(vesselTypes, StringComparer.OrdinalIgnoreCase);
 }

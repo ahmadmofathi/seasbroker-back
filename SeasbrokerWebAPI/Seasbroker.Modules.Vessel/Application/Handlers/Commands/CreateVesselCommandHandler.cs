@@ -46,6 +46,7 @@ public class CreateVesselCommandHandler : ICommandHandler<CreateVesselCommand, V
             VesselType = command.VesselType,
             Dwt = command.Dwt,
             TeuCapacity = command.TeuCapacity,
+            ReeferPlugs = command.ReeferPlugs,
             LengthOverall = command.LengthOverall,
             Beam = command.Beam,
             Draft = command.Draft,

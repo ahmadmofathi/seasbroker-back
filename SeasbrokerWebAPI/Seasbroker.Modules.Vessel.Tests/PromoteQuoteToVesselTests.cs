@@ -90,6 +90,29 @@ public class PromoteQuoteToVesselTests
         Assert.Equal("Al Fujayrah - United Arab Emirates", result.Availability.DestinationPort);
     }
 
+    [Theory]
+    [InlineData("true", true)]
+    [InlineData("false", false)]
+    [InlineData(null, false)]
+    public async Task ContainerShip_Request_Carries_Its_ReeferPlugs_Over(string? ticked, bool expected)
+    {
+        var values = OpenVessel();
+        values["vesselType"] = "Container Ship";
+        values["contCapacityTeu"] = "1200";
+        if (ticked is not null)
+        {
+            values["contReeferPlugs"] = ticked;
+        }
+
+        var (db, quote) = await SeedAsync(FormDefinition.ShipRequestKey, values);
+        await using var _ = db;
+
+        var result = await new PromoteQuoteToVesselCommandHandler(db).HandleAsync(new PromoteQuoteToVesselCommand(quote.Id.ToString()));
+
+        Assert.Equal("Container", result.Vessel.VesselType);
+        Assert.Equal(expected, result.Vessel.ReeferPlugs);
+    }
+
     [Fact]
     public async Task ScheduledRoute_Request_Keeps_The_Route_In_Order()
     {

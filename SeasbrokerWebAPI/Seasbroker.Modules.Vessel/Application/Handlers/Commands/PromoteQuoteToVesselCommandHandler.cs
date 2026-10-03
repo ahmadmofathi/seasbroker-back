@@ -98,6 +98,7 @@ public class PromoteQuoteToVesselCommandHandler
             VesselType = mapped.VesselType!,
             Dwt = mapped.Dwt,
             TeuCapacity = mapped.TeuCapacity,
+            ReeferPlugs = mapped.ReeferPlugs,
             LengthOverall = mapped.LengthOverall,
             Beam = mapped.Beam,
             Draft = mapped.Draft,

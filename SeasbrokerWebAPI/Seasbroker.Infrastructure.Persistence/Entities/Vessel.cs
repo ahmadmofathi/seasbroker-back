@@ -35,5 +35,11 @@ public class Vessel : AuditableEntity
 
     public string? Notes { get; set; }
 
+    /// <summary>
+    /// A container ship with reefer plugs can carry refrigerated cargo. False unless someone says
+    /// otherwise, so refrigerated cargo is never proposed for a vessel that might not have them.
+    /// </summary>
+    public bool ReeferPlugs { get; set; }
+
     public ICollection<VesselAvailability> Availabilities { get; set; } = new List<VesselAvailability>();
 }

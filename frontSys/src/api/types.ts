@@ -148,6 +148,8 @@ export interface VesselRecord extends PocketBaseRecord {
   notes?: string;
   /** The Ship Brokerage request this vessel was added from, if any. */
   requestedQuote?: string;
+  /** Container ships only: has reefer plugs, so refrigerated cargo can be matched to it. */
+  reeferPlugs?: boolean;
 }
 
 export interface PromoteToVesselResult {

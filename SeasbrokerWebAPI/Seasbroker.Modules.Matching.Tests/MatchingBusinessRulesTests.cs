@@ -130,6 +130,61 @@ public class MatchingEngineServiceTests
     }
 
     [Theory]
+    [InlineData("Refrigerated & Perishable Cargo", "Container", false, 0)]
+    [InlineData("Refrigerated & Perishable Cargo", "Container", true, 1)]
+    [InlineData("Refrigerated & Perishable Cargo", "General Cargo", true, 0)]
+    [InlineData("Containerized Cargo", "Container", false, 1)] // plugs only matter for refrigerated cargo
+    public async Task RunForCargoAsync_RefrigeratedCargoNeedsReeferPlugs(string cargoType, string vesselType, bool reeferPlugs, int expectedMatches)
+    {
+        await using var dbContext = CreateDbContext();
+        var departure = DateTime.UtcNow;
+        var arrival = departure.AddDays(10);
+        var cargoId = Guid.NewGuid();
+        var vesselId = Guid.NewGuid();
+
+        dbContext.CargoListings.Add(new CargoListing
+        {
+            Id = cargoId,
+            CustomerId = Guid.NewGuid(),
+            ReferenceNumber = "CRG-REEF-001",
+            CargoType = cargoType,
+            Weight = 1000,
+            Dimensions = "1x1x1",
+            DeparturePort = "Rotterdam",
+            ArrivalPort = "Singapore",
+            DepartureTime = departure,
+            ArrivalTime = arrival,
+            Status = CargoStatus.Open,
+            Priority = 5,
+        });
+        dbContext.Vessels.Add(new Vessel
+        {
+            Id = vesselId,
+            Name = "Reefer Check Vessel",
+            VesselType = vesselType,
+            Dwt = 5000,
+            CurrentPort = "Rotterdam",
+            Status = VesselStatus.Active,
+            ReeferPlugs = reeferPlugs,
+        });
+        dbContext.VesselAvailabilities.Add(new VesselAvailability
+        {
+            VesselId = vesselId,
+            OpenPort = "Rotterdam",
+            DestinationPort = "Singapore",
+            AvailableFrom = departure.AddDays(-1),
+            AvailableTo = arrival.AddDays(1),
+            IsActive = true,
+        });
+        await dbContext.SaveChangesAsync();
+
+        var engine = CreateEngine(dbContext, new MatchingOptions { MinScore = 60, MaxProposalsPerCargo = 5 });
+        var result = await engine.RunForCargoAsync(cargoId);
+
+        Assert.Equal(expectedMatches, result.MatchesCreated);
+    }
+
+    [Theory]
     [InlineData("General & Breakbulk Cargo", "RoRo", 0)]
     [InlineData("General & Breakbulk Cargo", "Bulk", 0)]
     [InlineData("General & Breakbulk Cargo", "General Cargo", 1)]

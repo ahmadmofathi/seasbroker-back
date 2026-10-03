@@ -53,6 +53,11 @@ public class UpdateVesselCommandHandler : ICommandHandler<UpdateVesselCommand, V
             vessel.TeuCapacity = command.TeuCapacity;
         }
 
+        if (command.ReeferPlugs.HasValue)
+        {
+            vessel.ReeferPlugs = command.ReeferPlugs.Value;
+        }
+
         if (command.LengthOverall.HasValue)
         {
             vessel.LengthOverall = command.LengthOverall;

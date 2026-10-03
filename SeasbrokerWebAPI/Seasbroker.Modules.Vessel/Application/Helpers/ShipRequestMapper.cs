@@ -14,7 +14,8 @@ public sealed record ShipRequestVessel(
     double? LengthOverall,
     double? Beam,
     double? Draft,
-    int? TeuCapacity);
+    int? TeuCapacity,
+    bool ReeferPlugs);
 
 public sealed record ShipRequestAvailability(
     DateTime AvailableFrom,
@@ -63,7 +64,8 @@ public static class ShipRequestMapper
             LengthOverall: Number(values, "loa"),
             Beam: Number(values, "beam"),
             Draft: Number(values, "draft") ?? Number(values, "contMaxDraft"),
-            TeuCapacity: Number(values, "contCapacityTeu") is { } teu ? (int)teu : null);
+            TeuCapacity: Number(values, "contCapacityTeu") is { } teu ? (int)teu : null,
+            ReeferPlugs: string.Equals(Get(values, "contReeferPlugs"), "true", StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>

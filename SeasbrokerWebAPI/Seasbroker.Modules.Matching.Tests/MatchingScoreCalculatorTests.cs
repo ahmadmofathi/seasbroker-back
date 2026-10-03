@@ -160,7 +160,7 @@ public class MatchingScoreCalculatorTests
             ArrivalTime = departure.AddDays(10),
             Priority = 3,
         };
-        var vessel = new Vessel { VesselType = vesselType, Dwt = 10000, CurrentPort = "Rotterdam" };
+        var vessel = new Vessel { VesselType = vesselType, Dwt = 10000, CurrentPort = "Rotterdam", ReeferPlugs = true };
         var availability = new VesselAvailability
         {
             OpenPort = "Rotterdam",

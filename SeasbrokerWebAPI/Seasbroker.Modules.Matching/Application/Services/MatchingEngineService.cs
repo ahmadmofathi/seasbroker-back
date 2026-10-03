@@ -219,9 +219,9 @@ public class MatchingEngineService : IMatchingEngineService
 
         var candidates = new List<EligibleVesselCandidate>();
 
-        // The vessel type has to suit the cargo: a good port/date/capacity fit must never be enough
-        // to propose, say, breakbulk cargo for a RoRo vessel.
-        foreach (var vessel in vessels.Where(v => MatchingConstants.IsTypeCompatible(cargo.CargoType, v.VesselType)))
+        // The vessel has to suit the cargo: a good port/date/capacity fit must never be enough to
+        // propose breakbulk cargo for a RoRo vessel, or refrigerated cargo for a ship with no reefer plugs.
+        foreach (var vessel in vessels.Where(v => MatchingConstants.CanCarry(cargo.CargoType, v.VesselType, v.ReeferPlugs)))
         {
             foreach (var availability in vessel.Availabilities.Where(a => a.IsActive))
             {

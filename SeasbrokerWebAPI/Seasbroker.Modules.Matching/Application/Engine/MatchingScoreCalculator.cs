@@ -169,7 +169,7 @@ public static class MatchingScoreCalculator
     }
 
     private static decimal CalculateTypeCompatibility(CargoListing cargo, Vessel vessel) =>
-        MatchingConstants.IsTypeCompatible(cargo.CargoType, vessel.VesselType) ? 1m : 0m;
+        MatchingConstants.CanCarry(cargo.CargoType, vessel.VesselType, vessel.ReeferPlugs) ? 1m : 0m;
 
     private static decimal CalculatePriorityBoost(CargoListing cargo)
     {

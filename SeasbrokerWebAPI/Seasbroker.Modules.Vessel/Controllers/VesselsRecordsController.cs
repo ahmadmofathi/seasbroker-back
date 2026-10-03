@@ -82,7 +82,8 @@ public class VesselsRecordsController : ControllerBase
                 request.FlagCountry,
                 request.Status,
                 request.Customer,
-                request.Notes),
+                request.Notes,
+                request.ReeferPlugs),
             cancellationToken);
 
         return Ok(vessel);
@@ -114,7 +115,8 @@ public class VesselsRecordsController : ControllerBase
                 request.FlagCountry,
                 request.Status,
                 request.Customer,
-                request.Notes),
+                request.Notes,
+                request.ReeferPlugs),
             cancellationToken);
 
         return Ok(vessel);

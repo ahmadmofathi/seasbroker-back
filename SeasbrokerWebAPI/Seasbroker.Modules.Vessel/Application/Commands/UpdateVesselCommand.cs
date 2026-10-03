@@ -13,4 +13,5 @@ public sealed record UpdateVesselCommand(
     string? FlagCountry,
     string? Status,
     string? CustomerId,
-    string? Notes);
+    string? Notes,
+    bool? ReeferPlugs = null);
