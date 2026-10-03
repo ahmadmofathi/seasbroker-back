@@ -136,6 +136,14 @@ const AdminQuotes: React.FC = () => {
                         <div style={{ fontSize: '0.75rem', color: 'var(--admin-muted)' }}>
                           {q.email} · {q.phoneNumber}
                         </div>
+                        {q.customerEditedAt && (
+                          <div
+                            style={{ fontSize: '0.75rem', color: 'var(--admin-warning, #b45309)' }}
+                            title="The customer changed their answers after registering - the details shown are the latest"
+                          >
+                            <i className="ri-edit-line" /> Edited by customer · {new Date(q.customerEditedAt).toLocaleDateString()}
+                          </div>
+                        )}
                         {q.trackingNumber && (
                           <div style={{ fontSize: '0.75rem', color: 'var(--admin-muted)' }} title="The customer's tracking number">
                             Tracking: <strong>{q.trackingNumber}</strong>

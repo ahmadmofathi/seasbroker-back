@@ -28,6 +28,7 @@ public static class FormSchemaUpgrades
         else if (formKey == FormsConstants.FormKeys.RequestRoute)
         {
             changed |= ScheduledRouteBuilder(schema);
+            changed |= ContainerShipQuantitiesAsContainerCounts(schema);
         }
         else if (formKey == FormsConstants.FormKeys.RequestClearance)
         {
@@ -133,6 +134,65 @@ public static class FormSchemaUpgrades
         }
 
         return changed;
+    }
+
+    /// <summary>
+    /// For a Container Ship the cargo quantity preference is a number of containers, not tonnes: hide
+    /// the two MT fields for container ships and add "Minimum / Maximum Number of Containers" for them.
+    /// </summary>
+    private static bool ContainerShipQuantitiesAsContainerCounts(FormSchemaDto schema)
+    {
+        var min = Find(schema, "minCargoQty");
+        var max = Find(schema, "maxCargoQty");
+        if (min is null || max is null || Find(schema, "minContainers") is not null)
+        {
+            return false;
+        }
+
+        // Only the untouched seed shape (no conditions yet); an admin's own conditions are left alone.
+        if (min.Conditions.Count > 0 || max.Conditions.Count > 0)
+        {
+            return false;
+        }
+
+        var section = schema.Sections.First(s => s.Fields.Contains(min));
+
+        foreach (var field in new[] { min, max })
+        {
+            field.ConditionCombinator = FormConditionCombinator.And;
+            field.Conditions.Add(new FormFieldConditionDto
+            {
+                SourceFieldKey = "vesselType",
+                Operator = FormConditionOperator.NotEquals,
+                Value = "Container Ship",
+            });
+        }
+
+        FormFieldDto ContainerField(string key, string label, FormFieldDto like) => new()
+        {
+            Key = key,
+            Label = label,
+            Type = FormFieldType.Number,
+            Visible = true,
+            Order = like.Order,
+            Width = like.Width,
+            ConditionCombinator = FormConditionCombinator.And,
+            Conditions =
+            {
+                new FormFieldConditionDto
+                {
+                    SourceFieldKey = "vesselType",
+                    Operator = FormConditionOperator.EqualsOp,
+                    Value = "Container Ship",
+                },
+            },
+            Validation = new FormFieldValidationDto { WholeNumber = true, Min = 1 },
+        };
+
+        section.Fields.Add(ContainerField("minContainers", "Minimum Number of Containers", min));
+        section.Fields.Add(ContainerField("maxContainers", "Maximum Number of Containers", max));
+        section.Fields = section.Fields.OrderBy(f => f.Order).ToList();
+        return true;
     }
 
     /// <summary>

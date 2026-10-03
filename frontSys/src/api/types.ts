@@ -321,6 +321,7 @@ export interface FormFieldValidation {
   digitsOnly?: boolean | null;
   noPastDates?: boolean | null;
   afterField?: string | null;
+  wholeNumber?: boolean | null;
   allowNegative?: boolean | null;
   noFutureYear?: boolean | null;
   fixedPrefix?: string | null;
@@ -406,6 +407,8 @@ export interface RequestTracking {
   statusLabel: string;
   statusDetail: string;
   steps: TrackingStep[];
+  /** True while the customer can still change the answers they gave (the team hasn't accepted it yet). */
+  canEdit: boolean;
   cargoReference?: string | null;
   vesselName?: string | null;
 }
@@ -423,4 +426,14 @@ export interface MessageEvent {
 export interface NotificationEvent {
   action: string;
   record: NotificationRecord;
+}
+
+/** A customer's own request, ready to edit in the form it was registered with. */
+export interface RequestEditForm {
+  trackingNumber: string;
+  schema: FormSchema;
+  /** Current answers by field key: strings, booleans (checkboxes), string lists (multi-select) or a route. */
+  values: Record<string, string | boolean | string[] | RouteStopValue[] | null>;
+  /** Files already attached; they stay as they are when the request is edited. */
+  files: { fieldKey: string; fileName: string; sizeBytes: number }[];
 }

@@ -121,6 +121,9 @@ public class RequestTrackingService : IRequestTrackingService
             ArrivalPort = NullIfBlank(listing?.ArrivalPort ?? quote?.ArrivalPort),
             CargoReference = listing?.ReferenceNumber,
             VesselName = vessel?.Name,
+            // Editable until the team accepts it (a cargo listing or fleet vessel exists); requests sent
+            // before the Forms module have no stored answers to edit.
+            CanEdit = quote is not null && sourceFormKey is not null && listing is null && vessel is null,
         };
 
         (string Key, string Label)[] stages;

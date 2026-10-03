@@ -75,7 +75,8 @@ const PublicDynamicForm: React.FC<PublicDynamicFormProps> = ({
           </p>
           <p className="mb-0">
             Keep this number. With the email address you registered with, it lets you follow your
-            request any time from the Track Your Service page.
+            request any time from the Track Your Service page, and change your answers there until our team
+            accepts it.
           </p>
         </div>
         <div className="d-flex flex-wrap gap-2">

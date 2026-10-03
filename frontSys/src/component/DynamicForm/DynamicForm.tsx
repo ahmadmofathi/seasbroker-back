@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import type { FormField, FormSchema } from '../../api/types';
 import type { SubmitFormFiles, SubmitFormValues } from '../../api/forms';
 import DynamicField from './DynamicField';
@@ -12,6 +12,12 @@ export interface DynamicFormProps {
   /** Rendered above the sections - lets a caller (e.g. the builder's Preview) add a banner or heading. */
   banner?: React.ReactNode;
   formId?: string;
+  /** Answers to start with - used when a customer edits a request they already sent. */
+  initialValues?: Record<string, FieldValue>;
+  /** Fields that are shown but can't be changed (e.g. the email that identifies the customer). */
+  lockedKeys?: string[];
+  /** Leaves file fields out. Editing a request doesn't change the files already uploaded. */
+  hideFileFields?: boolean;
 }
 
 const allFieldsOf = (schema: FormSchema): FormField[] => schema.sections.flatMap((s) => s.fields);
@@ -20,9 +26,21 @@ const allFieldsOf = (schema: FormSchema): FormField[] => schema.sections.flatMap
  * Renders a form from its schema and validates/submits it using the same engine everywhere the
  * schema is used: the real public form, and the admin builder's Preview.
  */
-const DynamicForm: React.FC<DynamicFormProps> = ({ schema, onSubmit, submitLabel = 'Submit', banner, formId }) => {
-  const fields = useMemo(() => allFieldsOf(schema), [schema]);
-  const [values, setValues] = useState<Record<string, FieldValue>>({});
+const DynamicForm: React.FC<DynamicFormProps> = ({
+  schema,
+  onSubmit,
+  submitLabel = 'Submit',
+  banner,
+  formId,
+  initialValues,
+  lockedKeys,
+  hideFileFields,
+}) => {
+  const fields = useMemo(
+    () => allFieldsOf(schema).filter((f) => !(hideFileFields && (f.type === 'File' || f.type === 'MultiFile'))),
+    [schema, hideFileFields],
+  );
+  const [values, setValues] = useState<Record<string, FieldValue>>(() => initialValues ?? {});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -104,15 +122,24 @@ const DynamicForm: React.FC<DynamicFormProps> = ({ schema, onSubmit, submitLabel
               {section.fields
                 .filter((f) => visibility[f.key])
                 .sort((a, b) => a.order - b.order)
-                .map((field) => (
-                  <DynamicField
-                    key={field.key}
-                    field={field}
-                    value={values[field.key]}
-                    error={errors[field.key]}
-                    onChange={(v) => setValue(field.key, v)}
-                  />
-                ))}
+                .map((field) => {
+                  const input = (
+                    <DynamicField
+                      field={field}
+                      value={values[field.key]}
+                      error={errors[field.key]}
+                      onChange={(v) => setValue(field.key, v)}
+                    />
+                  );
+                  // A disabled fieldset turns off every input inside it; display: contents keeps the layout.
+                  return lockedKeys?.includes(field.key) ? (
+                    <fieldset key={field.key} disabled style={{ display: 'contents' }}>
+                      {input}
+                    </fieldset>
+                  ) : (
+                    <Fragment key={field.key}>{input}</Fragment>
+                  );
+                })}
             </div>
           </div>
         ))}

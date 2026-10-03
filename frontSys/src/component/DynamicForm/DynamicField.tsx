@@ -38,8 +38,8 @@ const portOptions = Object.values(ports).map((port) => ({
  * or decimal (e.g. draft in metres) values. A leading '-' is kept only when `allowNegative` is
  * set - most numeric fields (weights, counts, capacities) can never legitimately be negative;
  * it's only turned on for fields that can be (e.g. sub-zero temperatures). */
-function sanitizeNumeric(raw: string, allowNegative: boolean): string {
-  let cleaned = raw.replace(/[^0-9.-]/g, '');
+function sanitizeNumeric(raw: string, allowNegative: boolean, wholeNumber = false): string {
+  let cleaned = raw.replace(wholeNumber ? /[^0-9-]/g : /[^0-9.-]/g, '');
   const negative = allowNegative && cleaned.startsWith('-');
   cleaned = cleaned.replace(/-/g, '');
   const dot = cleaned.indexOf('.');
@@ -117,7 +117,7 @@ const DynamicField: React.FC<DynamicFieldProps> = ({ field, value, error, onChan
           className={`form-control${invalidClass}`}
           placeholder={field.placeholder ?? undefined}
           value={(value as string) ?? ''}
-          onChange={(e) => onChange(sanitizeNumeric(e.target.value, field.validation?.allowNegative ?? false))}
+          onChange={(e) => onChange(sanitizeNumeric(e.target.value, field.validation?.allowNegative ?? false, field.validation?.wholeNumber ?? false))}
         />
       );
       break;

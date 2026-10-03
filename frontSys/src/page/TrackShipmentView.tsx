@@ -100,7 +100,23 @@ const TrackShipmentView: React.FC = () => {
                     {tracking.cargoReference && <p><strong>Cargo listing:</strong> {tracking.cargoReference}</p>}
                     {tracking.vesselName && <p><strong>Vessel:</strong> {tracking.vesselName}</p>}
 
-                    <Link to="/track_ship" className="btn btn-theme mt-2">Track another request</Link>
+                    {tracking.canEdit && (
+                      <p className="mt-3 mb-2">
+                        You can still change the details you sent until our team accepts your request.
+                      </p>
+                    )}
+                    <div className="d-flex flex-wrap gap-2 mt-2">
+                      {tracking.canEdit && (
+                        <Link
+                          to="/edit_request"
+                          state={{ number, email } satisfies TrackLookup}
+                          className="btn btn-theme"
+                        >
+                          Edit my request
+                        </Link>
+                      )}
+                      <Link to="/track_ship" className="btn btn-outline-secondary">Track another request</Link>
+                    </div>
                   </>
                 )}
               </div>

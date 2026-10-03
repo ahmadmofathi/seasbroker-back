@@ -46,6 +46,9 @@ public class RequestedQuote : AuditableEntity
     /// </summary>
     public string TrackingNumber { get; set; } = NewTrackingNumber();
 
+    /// <summary>When the customer last changed their answers themselves (before the request was accepted); null if never.</summary>
+    public DateTime? CustomerEditedAt { get; set; }
+
     public Guid CustomerId { get; set; }
 
     public Customer Customer { get; set; } = null!;

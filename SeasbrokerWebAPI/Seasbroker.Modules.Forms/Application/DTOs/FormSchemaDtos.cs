@@ -152,6 +152,10 @@ public class FormFieldValidationDto
     [JsonPropertyName("afterField")]
     public string? AfterField { get; set; }
 
+    /// <summary>Number only: whole numbers only (e.g. a count of containers) - no decimal part.</summary>
+    [JsonPropertyName("wholeNumber")]
+    public bool? WholeNumber { get; set; }
+
     /// <summary>Number/Decimal only: permits a leading minus sign. Off by default - most numeric
     /// fields (weights, counts, capacities) can never be negative; only set this for fields that
     /// genuinely can be (e.g. sub-zero temperatures).</summary>

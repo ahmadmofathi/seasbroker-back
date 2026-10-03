@@ -48,6 +48,10 @@ public class RequestTrackingDto
     [JsonPropertyName("steps")]
     public List<TrackingStepDto> Steps { get; set; } = new();
 
+    /// <summary>True while the customer can still change the answers they gave (the team hasn't accepted the request yet).</summary>
+    [JsonPropertyName("canEdit")]
+    public bool CanEdit { get; set; }
+
     /// <summary>The cargo listing reference (CRG-...), once the request has been listed.</summary>
     [JsonPropertyName("cargoReference")]
     public string? CargoReference { get; set; }

@@ -61,6 +61,10 @@ public class RequestedQuoteRecordDto
     [JsonPropertyName("trackingNumber")]
     public string TrackingNumber { get; set; } = string.Empty;
 
+    /// <summary>Set when the customer has edited their own answers since registering.</summary>
+    [JsonPropertyName("customerEditedAt")]
+    public DateTime? CustomerEditedAt { get; set; }
+
     /// <summary>Files the customer uploaded with the request (documents, photos, SDS, ...).</summary>
     [JsonPropertyName("attachments")]
     public List<RequestAttachmentDto> Attachments { get; set; } = new();

@@ -61,6 +61,7 @@ public sealed class TrackingIntegrationTests
         Assert.Equal(created.TrackingNumber, tracking.TrackingNumber);
         Assert.Equal("Cargo Brokerage", tracking.Service);
         Assert.Equal("review", tracking.Status);
+        Assert.False(tracking.CanEdit); // sent through the old quote API: no stored answers to edit
         Assert.Null(tracking.CargoReference);
 
         // A wrong email and an unknown number look the same: not found.

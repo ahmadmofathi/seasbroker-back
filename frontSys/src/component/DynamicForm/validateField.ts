@@ -58,6 +58,7 @@ export function validateField(
   if (field.type === 'Number' || field.type === 'Decimal') {
     const n = Number(value);
     if (Number.isNaN(n)) return `${field.label} must be a number.`;
+    if (v?.wholeNumber && !Number.isInteger(n)) return `${field.label} must be a whole number.`;
     if (v?.min != null && n < v.min) return `${field.label} must be at least ${v.min}.`;
     if (v?.max != null && n > v.max) return `${field.label} must be at most ${v.max}.`;
     return null;

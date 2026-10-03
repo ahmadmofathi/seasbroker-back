@@ -38,6 +38,8 @@ export interface RequestedQuoteRecord {
   customer?: string;
   status?: string;
   trackingNumber?: string;
+  /** Set when the customer has changed their own answers since registering. */
+  customerEditedAt?: string | null;
   /** Files the customer uploaded with the request. */
   attachments?: RequestAttachment[];
   isPromoted?: boolean;

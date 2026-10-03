@@ -121,4 +121,53 @@ public class FormSeedDataTests
         Assert.Equal("Photos (admin renamed)", documents.Label);
         FormSchemaValidator.Validate(schema);
     }
+
+    [Theory]
+    [InlineData("Container Ship", true)]
+    [InlineData("Bulk Carrier", false)]
+    [InlineData("LNG Carrier", false)]
+    public void RequestRoute_Quantity_Preference_Is_A_Container_Count_Only_For_Container_Ships(string vesselType, bool containerCount)
+    {
+        var (_, _, _, schema) = FormSeedData.RequestRoute();
+        var fields = schema.Sections.SelectMany(s => s.Fields).ToList();
+        var values = new Dictionary<string, string?> { ["vesselType"] = vesselType };
+
+        Assert.Equal(containerCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minContainers"), values));
+        Assert.Equal(containerCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "maxContainers"), values));
+        Assert.Equal(!containerCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minCargoQty"), values));
+        Assert.Equal(!containerCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "maxCargoQty"), values));
+
+        var count = fields.Single(f => f.Key == "minContainers");
+        Assert.Equal("Minimum Number of Containers", count.Label);
+        Assert.Equal(FormFieldType.Number, count.Type);
+        Assert.True(count.Validation?.WholeNumber);
+    }
+
+    [Fact]
+    public void Upgrade_Gives_A_Live_Ship_Form_The_Container_Count_Fields_And_Keeps_Admin_Edits()
+    {
+        // The form as it was before: the two MT fields visible for every vessel type.
+        var (key, _, _, schema) = FormSeedData.RequestRoute();
+        var all = schema.Sections.SelectMany(s => s.Fields).ToList();
+        foreach (var gone in all.Where(f => f.Key is "minContainers" or "maxContainers").ToList())
+        {
+            schema.Sections.Single(s => s.Fields.Contains(gone)).Fields.Remove(gone);
+        }
+
+        var min = schema.Sections.SelectMany(s => s.Fields).Single(f => f.Key == "minCargoQty");
+        var max = schema.Sections.SelectMany(s => s.Fields).Single(f => f.Key == "maxCargoQty");
+        min.Conditions.Clear();
+        max.Conditions.Clear();
+        min.Label = "Min quantity (admin renamed)";
+
+        Assert.True(FormSchemaUpgrades.Apply(key, schema));
+        FormSchemaValidator.Validate(schema);
+
+        var fields = schema.Sections.SelectMany(s => s.Fields).ToList();
+        Assert.Equal("Min quantity (admin renamed)", fields.Single(f => f.Key == "minCargoQty").Label);
+        var container = new Dictionary<string, string?> { ["vesselType"] = "Container Ship" };
+        Assert.True(ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minContainers"), container));
+        Assert.False(ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minCargoQty"), container));
+        Assert.False(FormSchemaUpgrades.Apply(key, schema)); // applying it again changes nothing
+    }
 }

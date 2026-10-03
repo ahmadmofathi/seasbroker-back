@@ -279,8 +279,11 @@ public static class FormSeedData
                         ("Gas Cargo", "Gas Cargo"),
                         ("Refrigerated & Perishable", "Refrigerated & Perishable"),
                     }),
-                    Number("minCargoQty", "Minimum Cargo Quantity (MT)", 3, width: FormFieldWidth.Third),
-                    Number("maxCargoQty", "Maximum Cargo Quantity (MT)", 4, width: FormFieldWidth.Third),
+                    // A container ship carries a number of containers, not a tonnage.
+                    WithCondition(Number("minCargoQty", "Minimum Cargo Quantity (MT)", 3, width: FormFieldWidth.Third), "vesselType", FormConditionOperator.NotEquals, "Container Ship"),
+                    WithCondition(Number("maxCargoQty", "Maximum Cargo Quantity (MT)", 4, width: FormFieldWidth.Third), "vesselType", FormConditionOperator.NotEquals, "Container Ship"),
+                    ConditionalOn("vesselType", "Container Ship", Number("minContainers", "Minimum Number of Containers", 3, width: FormFieldWidth.Third, validation: ContainerCount)),
+                    ConditionalOn("vesselType", "Container Ship", Number("maxContainers", "Maximum Number of Containers", 4, width: FormFieldWidth.Third, validation: ContainerCount)),
                     Select("dgAccepted", "Dangerous Goods Accepted?", 5, options: YesNoOptions, width: FormFieldWidth.Third),
                     Text("preferredCommodity", "Preferred Cargo / Commodity", 6, width: FormFieldWidth.Half)),
 
@@ -534,6 +537,9 @@ public static class FormSeedData
         Field(key, label, FormFieldType.Date, order, required, systemKey, width, validation: validation);
 
     private static FormFieldValidationDto NoPastDates => new() { NoPastDates = true };
+
+    /// <summary>A count of containers: a whole number of at least 1, with no unit.</summary>
+    private static FormFieldValidationDto ContainerCount => new() { WholeNumber = true, Min = 1 };
 
     private static FormFieldValidationDto AllowNegative => new() { AllowNegative = true };
 

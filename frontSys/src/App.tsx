@@ -17,6 +17,7 @@ import OurTeamArea from './page/OurTeam';
 import Testimonials from './page/Testimonial';
 import Faqs from './page/Faqs';
 import TrackShipmentView from './page/TrackShipmentView';
+import EditRequest from './page/EditRequest';
 import PrivacyPolicy from './page/PrivacyPolicy';
 import TermsCondition from './page/TermsCondition';
 import Error from './page/Error';
@@ -61,6 +62,7 @@ const PublicLayout: React.FC = () => (
       <Route path='/terms' element={<TermsCondition />} />
       <Route path='/contact' element={<Contact />} />
       <Route path='/your_shipment' element={<TrackShipmentView />} />
+      <Route path='/edit_request' element={<EditRequest />} />
       <Route path='/clearance_offices' element={<ClearanceOffice />} />
       <Route path='/request_route' element={<RequestRoute />} />
       <Route path='/request_clearance' element={<RequestClearance />} />

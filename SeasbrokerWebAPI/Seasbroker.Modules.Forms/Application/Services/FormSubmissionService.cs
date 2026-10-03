@@ -50,26 +50,10 @@ public class FormSubmissionService : IFormSubmissionService
             ?? throw new FormsException($"Form '{formKey}' is not currently accepting submissions.", StatusCodes.Status409Conflict);
 
         var schema = FormMapper.ToSchemaDto(version, formKey);
-        var allFields = schema.Sections.SelectMany(s => s.Fields).ToList();
-
-        var normalized = allFields.ToDictionary(
-            f => f.Key,
-            f => NormalizeRawValue(rawValues.GetValueOrDefault(f.Key)),
-            StringComparer.OrdinalIgnoreCase);
-
-        var visibleFields = allFields.Where(f => ConditionEvaluator.IsVisible(f, normalized)).ToList();
-
-        foreach (var field in visibleFields)
-        {
-            ValidateField(field, normalized.GetValueOrDefault(field.Key), files);
-            ValidateAfterField(field, visibleFields, normalized);
-        }
-
-        var systemValues = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
-        foreach (var field in visibleFields.Where(f => f.IsSystemField && !string.IsNullOrEmpty(f.SystemFieldKey)))
-        {
-            systemValues[field.SystemFieldKey!] = normalized.GetValueOrDefault(field.Key);
-        }
+        var evaluated = Evaluate(formKey, schema, rawValues, files);
+        var visibleFields = evaluated.VisibleFields;
+        var normalized = evaluated.Normalized;
+        var systemValues = evaluated.SystemValues;
 
         var email = systemValues.GetValueOrDefault(FormsConstants.SystemFieldKeys.Email)?.Trim();
         if (string.IsNullOrWhiteSpace(email))
@@ -90,16 +74,7 @@ public class FormSubmissionService : IFormSubmissionService
             _dbContext.Customers.Add(customer);
         }
 
-        var extraFields = visibleFields
-            .Where(f => !FormFieldType.FileBased.Contains(f.Type))
-            .Where(f => !(f.IsSystemField && f.SystemFieldKey is not null && FormsConstants.SystemFieldKeys.MappedToRequestedQuote.Contains(f.SystemFieldKey)))
-            .ToList();
-
-        var additionalInfo = BuildAdditionalInfo(
-            ServiceTags.GetValueOrDefault(formKey, formKey),
-            systemValues.GetValueOrDefault(FormsConstants.SystemFieldKeys.AdditionalInfo),
-            extraFields,
-            normalized);
+        var additionalInfo = evaluated.AdditionalInfo;
 
         var requestedQuote = new RequestedQuote
         {
@@ -158,6 +133,271 @@ public class FormSubmissionService : IFormSubmissionService
             RequestedQuoteId = requestedQuote.Id.ToString(),
             TrackingNumber = requestedQuote.TrackingNumber,
         };
+    }
+
+    private const string NotFoundMessage = "We couldn't find a request with that tracking number and email address.";
+
+    public async Task<RequestEditFormDto> LoadForEditAsync(string? number, string? email, CancellationToken cancellationToken = default)
+    {
+        var (quote, submission, version) = await FindEditableAsync(number, email, cancellationToken);
+        var schema = FormMapper.ToSchemaDto(version, version.FormDefinition.Key);
+        var fieldsByKey = schema.Sections
+            .SelectMany(s => s.Fields)
+            .ToDictionary(f => f.Key, StringComparer.OrdinalIgnoreCase);
+
+        var values = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var stored in submission.Values)
+        {
+            if (fieldsByKey.TryGetValue(stored.FieldKey, out var field))
+            {
+                values[field.Key] = ToEditableValue(field, stored.ValueText);
+            }
+        }
+
+        var files = await _dbContext.FormSubmissionFiles
+            .AsNoTracking()
+            .Where(f => f.FormSubmissionId == submission.Id)
+            .OrderBy(f => f.Created)
+            .Select(f => new RequestEditFileDto { FieldKey = f.FieldKey, FileName = f.FileName, SizeBytes = f.SizeBytes })
+            .ToListAsync(cancellationToken);
+
+        return new RequestEditFormDto
+        {
+            TrackingNumber = quote.TrackingNumber,
+            Schema = schema,
+            Values = values,
+            Files = files,
+        };
+    }
+
+    public async Task UpdateAsync(
+        string? number,
+        string? email,
+        Dictionary<string, JsonElement> rawValues,
+        CancellationToken cancellationToken = default)
+    {
+        var (quote, submission, version) = await FindEditableAsync(number, email, cancellationToken);
+        var formKey = version.FormDefinition.Key;
+        var schema = FormMapper.ToSchemaDto(version, formKey);
+
+        var fieldsWithFiles = (await _dbContext.FormSubmissionFiles
+                .Where(f => f.FormSubmissionId == submission.Id)
+                .Select(f => f.FieldKey)
+                .Distinct()
+                .ToListAsync(cancellationToken))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        // Same checks as registering. The email can't be changed (it's what identifies the customer),
+        // and the files already uploaded stay as they are.
+        var evaluated = Evaluate(
+            formKey,
+            schema,
+            rawValues,
+            new FormFileCollection(),
+            lockedEmail: quote.Customer.Email,
+            existingFileFields: fieldsWithFiles);
+
+        var system = evaluated.SystemValues;
+        quote.CargoType = Truncate(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.CargoType), 255);
+        quote.Weight = double.TryParse(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.Weight), NumberStyles.Any, CultureInfo.InvariantCulture, out var weight) ? weight : 0;
+        quote.DeparturePort = Truncate(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.DeparturePort), 255);
+        quote.DepartureTime = Truncate(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.DepartureTime), 100);
+        quote.ArrivalPort = Truncate(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.ArrivalPort), 255);
+        quote.ArrivalTime = Truncate(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.ArrivalTime), 100);
+        quote.Dimensions = Truncate(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.Dimensions), 255);
+        quote.AdditionalInfo = Truncate(evaluated.AdditionalInfo, 2000);
+        quote.CustomerEditedAt = DateTime.UtcNow;
+
+        // The same person (same email): keep their name and phone current for the team too.
+        var customer = quote.Customer;
+        if (!string.IsNullOrWhiteSpace(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.PhoneNumber)))
+        {
+            customer.PhoneNumber = system[FormsConstants.SystemFieldKeys.PhoneNumber]!;
+        }
+
+        if (!string.IsNullOrWhiteSpace(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.FirstName)))
+        {
+            customer.FirstName = system[FormsConstants.SystemFieldKeys.FirstName]!;
+        }
+
+        if (!string.IsNullOrWhiteSpace(system.GetValueOrDefault(FormsConstants.SystemFieldKeys.LastName)))
+        {
+            customer.LastName = system[FormsConstants.SystemFieldKeys.LastName]!;
+        }
+
+        // Replace the stored answers with the new ones (answers to now-hidden fields are dropped, as when registering).
+        _dbContext.FormSubmissionValues.RemoveRange(submission.Values);
+        foreach (var field in evaluated.VisibleFields.Where(f => !FormFieldType.FileBased.Contains(f.Type)))
+        {
+            _dbContext.FormSubmissionValues.Add(new FormSubmissionValue
+            {
+                FormSubmissionId = submission.Id,
+                FieldKey = field.Key,
+                ValueText = evaluated.Normalized.GetValueOrDefault(field.Key),
+            });
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Finds the customer's request by tracking number + email and checks it can still be edited: it must
+    /// have stored answers (sent through a form) and the team must not have accepted it yet - i.e. it hasn't
+    /// become a cargo listing or a fleet vessel. A wrong number and a wrong email give the same answer.
+    /// </summary>
+    private async Task<(RequestedQuote Quote, FormSubmission Submission, FormVersion Version)> FindEditableAsync(
+        string? number,
+        string? email,
+        CancellationToken cancellationToken)
+    {
+        var normalizedNumber = number?.Trim().ToUpperInvariant() ?? string.Empty;
+        var normalizedEmail = email?.Trim() ?? string.Empty;
+        if (normalizedNumber.Length == 0 || normalizedEmail.Length == 0)
+        {
+            throw new FormsException("Enter your tracking number and email address.", StatusCodes.Status400BadRequest);
+        }
+
+        var quote = await _dbContext.RequestedQuotes
+            .Include(q => q.Customer)
+            .FirstOrDefaultAsync(q => q.TrackingNumber == normalizedNumber, cancellationToken);
+        if (quote is null || !string.Equals(quote.Customer.Email, normalizedEmail, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new FormsException(NotFoundMessage, StatusCodes.Status404NotFound);
+        }
+
+        var submission = await _dbContext.FormSubmissions
+            .Include(s => s.Values)
+            .FirstOrDefaultAsync(s => s.RequestedQuoteId == quote.Id, cancellationToken)
+            ?? throw new FormsException(
+                "This request was sent before online editing was available. Please contact us if you need to change it.",
+                StatusCodes.Status409Conflict);
+
+        var accepted =
+            await _dbContext.CargoListings.AnyAsync(c => c.RequestedQuoteId == quote.Id, cancellationToken) ||
+            await _dbContext.Vessels.AnyAsync(v => v.RequestedQuoteId == quote.Id, cancellationToken);
+        if (accepted)
+        {
+            throw new FormsException(
+                "Your request has already been accepted and is being processed, so it can't be edited here. Please contact us to change it.",
+                StatusCodes.Status409Conflict);
+        }
+
+        var version = await _dbContext.FormVersions
+            .AsNoTracking()
+            .Include(v => v.FormDefinition)
+            .Include(v => v.Sections).ThenInclude(s => s.Fields).ThenInclude(f => f.Options)
+            .Include(v => v.Sections).ThenInclude(s => s.Fields).ThenInclude(f => f.Conditions)
+            .FirstAsync(v => v.Id == submission.FormVersionId, cancellationToken);
+
+        return (quote, submission, version);
+    }
+
+    /// <summary>Turns a stored answer back into the value its field's input works with.</summary>
+    private static object? ToEditableValue(FormFieldDto field, string? text)
+    {
+        if (text is null)
+        {
+            return null;
+        }
+
+        if (field.Type == FormFieldType.MultiSelect)
+        {
+            return ParseJsonStringArray(text);
+        }
+
+        if (field.Type == FormFieldType.Route)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<JsonElement>(text);
+            }
+            catch (JsonException)
+            {
+                return Array.Empty<object>();
+            }
+        }
+
+        if (field.Type == FormFieldType.Checkbox || field.Type == FormFieldType.Toggle)
+        {
+            return string.Equals(text, "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        return text;
+    }
+
+    private sealed record EvaluatedSubmission(
+        List<FormFieldDto> VisibleFields,
+        Dictionary<string, string?> Normalized,
+        Dictionary<string, string?> SystemValues,
+        string AdditionalInfo);
+
+    /// <summary>
+    /// Works out which fields are visible for the given answers, validates them, and derives the
+    /// values the request is built from. Shared by registering a request and by a customer editing it.
+    /// When editing, <paramref name="lockedEmail"/> keeps the customer's email whatever was sent, and
+    /// <paramref name="existingFileFields"/> lists the file fields that already have uploaded files
+    /// (files themselves aren't changed by an edit, so a required file field is satisfied by them).
+    /// </summary>
+    private static EvaluatedSubmission Evaluate(
+        string formKey,
+        FormSchemaDto schema,
+        Dictionary<string, JsonElement> rawValues,
+        IFormFileCollection files,
+        string? lockedEmail = null,
+        IReadOnlySet<string>? existingFileFields = null)
+    {
+        var allFields = schema.Sections.SelectMany(s => s.Fields).ToList();
+
+        var normalized = allFields.ToDictionary(
+            f => f.Key,
+            f => NormalizeRawValue(rawValues.GetValueOrDefault(f.Key)),
+            StringComparer.OrdinalIgnoreCase);
+
+        if (lockedEmail is not null)
+        {
+            var emailField = allFields.FirstOrDefault(f => f.IsSystemField && f.SystemFieldKey == FormsConstants.SystemFieldKeys.Email);
+            if (emailField is not null)
+            {
+                normalized[emailField.Key] = lockedEmail;
+            }
+        }
+
+        var visibleFields = allFields.Where(f => ConditionEvaluator.IsVisible(f, normalized)).ToList();
+
+        foreach (var field in visibleFields)
+        {
+            if (existingFileFields is not null && FormFieldType.FileBased.Contains(field.Type))
+            {
+                if (field.Required && !existingFileFields.Contains(field.Key))
+                {
+                    throw new FormsException($"'{field.Label}' is required.", StatusCodes.Status400BadRequest);
+                }
+
+                continue;
+            }
+
+            ValidateField(field, normalized.GetValueOrDefault(field.Key), files);
+            ValidateAfterField(field, visibleFields, normalized);
+        }
+
+        var systemValues = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        foreach (var field in visibleFields.Where(f => f.IsSystemField && !string.IsNullOrEmpty(f.SystemFieldKey)))
+        {
+            systemValues[field.SystemFieldKey!] = normalized.GetValueOrDefault(field.Key);
+        }
+
+        var extraFields = visibleFields
+            .Where(f => !FormFieldType.FileBased.Contains(f.Type))
+            .Where(f => !(f.IsSystemField && f.SystemFieldKey is not null && FormsConstants.SystemFieldKeys.MappedToRequestedQuote.Contains(f.SystemFieldKey)))
+            .ToList();
+
+        var additionalInfo = BuildAdditionalInfo(
+            ServiceTags.GetValueOrDefault(formKey, formKey),
+            systemValues.GetValueOrDefault(FormsConstants.SystemFieldKeys.AdditionalInfo),
+            extraFields,
+            normalized);
+
+        return new EvaluatedSubmission(visibleFields, normalized, systemValues, additionalInfo);
     }
 
     private static void ValidateAfterField(FormFieldDto field, List<FormFieldDto> visibleFields, Dictionary<string, string?> values)
@@ -304,6 +544,11 @@ public class FormSubmissionService : IFormSubmissionService
                 if (!double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out var numeric))
                 {
                     throw new FormsException($"'{field.Label}' must be a number.", StatusCodes.Status400BadRequest);
+                }
+
+                if (v?.WholeNumber == true && numeric != Math.Floor(numeric))
+                {
+                    throw new FormsException($"'{field.Label}' must be a whole number.", StatusCodes.Status400BadRequest);
                 }
 
                 if (v?.Min is not null && numeric < v.Min)
