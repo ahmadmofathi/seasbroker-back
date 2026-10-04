@@ -29,6 +29,7 @@ public static class FormSchemaUpgrades
         {
             changed |= ScheduledRouteBuilder(schema);
             changed |= ContainerShipQuantitiesAsContainerCounts(schema);
+            changed |= RoRoQuantitiesAsUnitCounts(schema);
         }
         else if (formKey == FormsConstants.FormKeys.RequestClearance)
         {
@@ -191,6 +192,70 @@ public static class FormSchemaUpgrades
 
         section.Fields.Add(ContainerField("minContainers", "Minimum Number of Containers", min));
         section.Fields.Add(ContainerField("maxContainers", "Maximum Number of Containers", max));
+        section.Fields = section.Fields.OrderBy(f => f.Order).ToList();
+        return true;
+    }
+
+    /// <summary>
+    /// For a RoRo or PCTC vessel the cargo quantity preference is a number of units (vehicles, trailers),
+    /// not tonnes: hide the two MT fields for it as well and add "Minimum / Maximum Number of Units".
+    /// Runs after the container patch, so the MT fields carry exactly its one "not a Container Ship" condition.
+    /// </summary>
+    private static bool RoRoQuantitiesAsUnitCounts(FormSchemaDto schema)
+    {
+        var min = Find(schema, "minCargoQty");
+        var max = Find(schema, "maxCargoQty");
+        if (min is null || max is null || Find(schema, "minUnits") is not null)
+        {
+            return false;
+        }
+
+        static bool OnlyNotContainerShip(FormFieldDto f) =>
+            f.Conditions.Count == 1 &&
+            f.Conditions[0] is { SourceFieldKey: "vesselType", Operator: FormConditionOperator.NotEquals, Value: "Container Ship" };
+
+        // Only the shape the container patch leaves; an admin's own conditions are left alone.
+        if (!OnlyNotContainerShip(min) || !OnlyNotContainerShip(max))
+        {
+            return false;
+        }
+
+        var section = schema.Sections.First(s => s.Fields.Contains(min));
+
+        foreach (var field in new[] { min, max })
+        {
+            field.ConditionCombinator = FormConditionCombinator.And;
+            field.Conditions.Add(new FormFieldConditionDto
+            {
+                SourceFieldKey = "vesselType",
+                Operator = FormConditionOperator.NotEquals,
+                Value = "RoRo or PCTC",
+            });
+        }
+
+        FormFieldDto UnitField(string key, string label, FormFieldDto like) => new()
+        {
+            Key = key,
+            Label = label,
+            Type = FormFieldType.Number,
+            Visible = true,
+            Order = like.Order,
+            Width = like.Width,
+            ConditionCombinator = FormConditionCombinator.And,
+            Conditions =
+            {
+                new FormFieldConditionDto
+                {
+                    SourceFieldKey = "vesselType",
+                    Operator = FormConditionOperator.EqualsOp,
+                    Value = "RoRo or PCTC",
+                },
+            },
+            Validation = new FormFieldValidationDto { WholeNumber = true, Min = 1 },
+        };
+
+        section.Fields.Add(UnitField("minUnits", "Minimum Number of Units", min));
+        section.Fields.Add(UnitField("maxUnits", "Maximum Number of Units", max));
         section.Fields = section.Fields.OrderBy(f => f.Order).ToList();
         return true;
     }

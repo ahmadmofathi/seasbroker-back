@@ -1,4 +1,5 @@
 using Seasbroker.Infrastructure.Persistence.Entities;
+using Seasbroker.Modules.Forms.Application.DTOs;
 using Seasbroker.Modules.Forms.Application.Services;
 using Seasbroker.Modules.Forms.Infrastructure;
 
@@ -123,24 +124,86 @@ public class FormSeedDataTests
     }
 
     [Theory]
-    [InlineData("Container Ship", true)]
-    [InlineData("Bulk Carrier", false)]
-    [InlineData("LNG Carrier", false)]
-    public void RequestRoute_Quantity_Preference_Is_A_Container_Count_Only_For_Container_Ships(string vesselType, bool containerCount)
+    [InlineData("Container Ship", true, false)]
+    [InlineData("RoRo or PCTC", false, true)]
+    [InlineData("Bulk Carrier", false, false)]
+    [InlineData("LNG Carrier", false, false)]
+    public void RequestRoute_Quantity_Preference_Is_A_Count_For_Container_And_RoRo_Ships_And_Tonnes_For_The_Rest(
+        string vesselType, bool containerCount, bool unitCount)
     {
         var (_, _, _, schema) = FormSeedData.RequestRoute();
         var fields = schema.Sections.SelectMany(s => s.Fields).ToList();
         var values = new Dictionary<string, string?> { ["vesselType"] = vesselType };
+        var tonnes = !containerCount && !unitCount;
 
         Assert.Equal(containerCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minContainers"), values));
         Assert.Equal(containerCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "maxContainers"), values));
-        Assert.Equal(!containerCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minCargoQty"), values));
-        Assert.Equal(!containerCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "maxCargoQty"), values));
+        Assert.Equal(unitCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minUnits"), values));
+        Assert.Equal(unitCount, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "maxUnits"), values));
+        Assert.Equal(tonnes, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minCargoQty"), values));
+        Assert.Equal(tonnes, ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "maxCargoQty"), values));
 
-        var count = fields.Single(f => f.Key == "minContainers");
-        Assert.Equal("Minimum Number of Containers", count.Label);
-        Assert.Equal(FormFieldType.Number, count.Type);
-        Assert.True(count.Validation?.WholeNumber);
+        var containers = fields.Single(f => f.Key == "minContainers");
+        Assert.Equal("Minimum Number of Containers", containers.Label);
+        Assert.Equal(FormFieldType.Number, containers.Type);
+        Assert.True(containers.Validation?.WholeNumber);
+
+        var units = fields.Single(f => f.Key == "maxUnits");
+        Assert.Equal("Maximum Number of Units", units.Label);
+        Assert.True(units.Validation?.WholeNumber);
+        Assert.Equal(1, units.Validation?.Min);
+    }
+
+    [Fact]
+    public void Upgrade_Takes_The_Live_Container_Only_Form_To_RoRo_Units_Too_And_Keeps_Admin_Edits()
+    {
+        // The live form as of the container change: the MT fields hidden only for container ships.
+        var (key, _, _, schema) = FormSeedData.RequestRoute();
+        var all = schema.Sections.SelectMany(s => s.Fields).ToList();
+        foreach (var gone in all.Where(f => f.Key is "minUnits" or "maxUnits").ToList())
+        {
+            schema.Sections.Single(s => s.Fields.Contains(gone)).Fields.Remove(gone);
+        }
+
+        var min = schema.Sections.SelectMany(s => s.Fields).Single(f => f.Key == "minCargoQty");
+        var max = schema.Sections.SelectMany(s => s.Fields).Single(f => f.Key == "maxCargoQty");
+        min.Conditions.RemoveAll(c => c.Value == "RoRo or PCTC");
+        max.Conditions.RemoveAll(c => c.Value == "RoRo or PCTC");
+        min.Label = "Min quantity (admin renamed)";
+
+        Assert.True(FormSchemaUpgrades.Apply(key, schema));
+        FormSchemaValidator.Validate(schema);
+
+        var fields = schema.Sections.SelectMany(s => s.Fields).ToList();
+        Assert.Equal("Min quantity (admin renamed)", fields.Single(f => f.Key == "minCargoQty").Label);
+        var roro = new Dictionary<string, string?> { ["vesselType"] = "RoRo or PCTC" };
+        var bulk = new Dictionary<string, string?> { ["vesselType"] = "Bulk Carrier" };
+        Assert.True(ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minUnits"), roro));
+        Assert.False(ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minCargoQty"), roro));
+        Assert.True(ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minCargoQty"), bulk));
+        Assert.False(ConditionEvaluator.IsVisible(fields.Single(f => f.Key == "minUnits"), bulk));
+        Assert.False(FormSchemaUpgrades.Apply(key, schema)); // applying it again changes nothing
+    }
+
+    [Fact]
+    public void Upgrade_Leaves_An_Admin_Customised_Quantity_Condition_Alone()
+    {
+        var (key, _, _, schema) = FormSeedData.RequestRoute();
+        var all = schema.Sections.SelectMany(s => s.Fields).ToList();
+        foreach (var gone in all.Where(f => f.Key is "minUnits" or "maxUnits").ToList())
+        {
+            schema.Sections.Single(s => s.Fields.Contains(gone)).Fields.Remove(gone);
+        }
+
+        var min = schema.Sections.SelectMany(s => s.Fields).Single(f => f.Key == "minCargoQty");
+        var max = schema.Sections.SelectMany(s => s.Fields).Single(f => f.Key == "maxCargoQty");
+        min.Conditions.Clear();
+        max.Conditions.Clear();
+        min.Conditions.Add(new FormFieldConditionDto { SourceFieldKey = "vesselType", Operator = FormConditionOperator.EqualsOp, Value = "Bulk Carrier" });
+
+        FormSchemaUpgrades.Apply(key, schema);
+
+        Assert.DoesNotContain(schema.Sections.SelectMany(s => s.Fields), f => f.Key == "minUnits");
     }
 
     [Fact]
