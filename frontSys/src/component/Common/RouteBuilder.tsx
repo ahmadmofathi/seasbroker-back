@@ -81,7 +81,7 @@ const RouteBuilder: React.FC<RouteBuilderProps> = ({ stops, onChange, etaType, m
       ))}
       <button
         type="button"
-        className="btn btn-sm btn-outline-primary"
+        className="btn btn-sm btn-theme-outline"
         disabled={!canAdd}
         title={canAdd ? undefined : 'Pick a port and ETA for the last stop first'}
         onClick={() => { onChange([...rows, EMPTY_STOP]); }}

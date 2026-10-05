@@ -115,7 +115,7 @@ const TrackShipmentView: React.FC = () => {
                           Edit my request
                         </Link>
                       )}
-                      <Link to="/track_ship" className="btn btn-outline-secondary">Track another request</Link>
+                      <Link to="/track_ship" className="btn btn-theme-outline">Track another request</Link>
                     </div>
                   </>
                 )}

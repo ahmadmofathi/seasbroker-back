@@ -65,7 +65,7 @@ const PublicDynamicForm: React.FC<PublicDynamicFormProps> = ({
             <strong style={{ fontSize: '1.6rem', letterSpacing: '0.05em' }}>{registered.trackingNumber}</strong>
             <button
               type="button"
-              className="btn btn-sm btn-outline-success"
+              className="btn btn-sm btn-theme-outline"
               onClick={() => {
                 void navigator.clipboard.writeText(registered.trackingNumber).then(() => { setCopied(true); });
               }}
@@ -91,7 +91,7 @@ const PublicDynamicForm: React.FC<PublicDynamicFormProps> = ({
           >
             Track this request
           </button>
-          <Link to={redirectTo} className="btn btn-outline-secondary">Back to home</Link>
+          <Link to={redirectTo} className="btn btn-theme-outline">Back to home</Link>
         </div>
       </div>
     );

@@ -3580,3 +3580,14 @@ textarea {
 /* =============================
        Sign in Page End
 ============================== */
+
+.btn-theme-outline {
+  background: transparent;
+  color: var(--heading-color);
+  border: 1px solid var(--heading-color);
+}
+
+.btn-theme-outline:hover {
+  background: var(--heading-color);
+  color: #fff;
+}
