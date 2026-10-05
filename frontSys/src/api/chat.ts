@@ -16,6 +16,15 @@ export async function getChatToken(): Promise<ChatTokenResponse> {
   return api<ChatTokenResponse>('/api/get-chat-token', { method: 'POST' });
 }
 
+/** The visitor's own conversation (including replies sent while they were away), proven by their chat token. */
+export async function getChatHistory(chatId: string, token: string): Promise<MessageRecord[]> {
+  const response = await api<{ items: MessageRecord[] }>('/api/chat/history', {
+    method: 'POST',
+    body: { chatId, token },
+  });
+  return response.items;
+}
+
 export async function listChats(): Promise<ChatRecord[]> {
   return adminList<ChatRecord>('chats', { page: 1, perPage: 50 });
 }

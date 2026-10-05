@@ -46,6 +46,37 @@ public class MessageService : IMessageService
         return messages.Select(ChatMapper.ToRecordDto).ToList();
     }
 
+    public async Task<IReadOnlyList<MessageRecordDto>> GetForVisitorAsync(
+        string? chatId,
+        string? token,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(token) || !Guid.TryParse(chatId, out var parsedChatId))
+        {
+            throw new ChatException("Bad call to read messages", StatusCodes.Status400BadRequest);
+        }
+
+        var chatToken = await _dbContext.ChatTokens
+            .AsNoTracking()
+            .FirstOrDefaultAsync(t => t.Token == token, cancellationToken);
+
+        switch (ChatTokenValidator.Validate(chatToken, parsedChatId, DateTime.UtcNow))
+        {
+            case ChatTokenValidationResult.Invalid:
+                throw new ChatException("Invalid token", StatusCodes.Status400BadRequest);
+            case ChatTokenValidationResult.Expired:
+                throw new ChatException("Token expired.", StatusCodes.Status401Unauthorized);
+        }
+
+        var messages = await _dbContext.Messages
+            .AsNoTracking()
+            .Where(m => m.ChatId == parsedChatId)
+            .OrderBy(m => m.Created)
+            .ToListAsync(cancellationToken);
+
+        return messages.Select(ChatMapper.ToRecordDto).ToList();
+    }
+
     public async Task<MessageRecordDto> CreateAsAdminAsync(
         CreateAdminMessageCommand command,
         CancellationToken cancellationToken = default)

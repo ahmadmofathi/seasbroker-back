@@ -14,6 +14,12 @@ public interface IMessageService
         CreateAdminMessageCommand command,
         CancellationToken cancellationToken = default);
 
+    /// <summary>A visitor's own conversation, proven by the token they were given for that chat.</summary>
+    Task<IReadOnlyList<MessageRecordDto>> GetForVisitorAsync(
+        string? chatId,
+        string? token,
+        CancellationToken cancellationToken = default);
+
     Task<MessageRecordDto> CreateAsAnonymousAsync(
         CreateAnonymousMessageCommand command,
         CancellationToken cancellationToken = default);

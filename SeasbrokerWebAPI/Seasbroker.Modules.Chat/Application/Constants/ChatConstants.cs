@@ -4,9 +4,10 @@ public static class ChatConstants
 {
     public const string ChatTokenCookieName = "chatToken";
 
-    public const int ChatTokenCookieMaxAgeSeconds = 86400;
+    /// <summary>A visitor's chat stays reachable for a week, so they can come back and read our reply.</summary>
+    public const int ChatTokenExpiryHours = 24 * 7;
 
-    public const int ChatTokenExpiryHours = 24;
+    public const int ChatTokenCookieMaxAgeSeconds = ChatTokenExpiryHours * 3600;
 
     public const string SuperuserRole = "Superuser";
 
